@@ -1,0 +1,50 @@
+body {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Safari */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* Internet Explorer/Edge */
+    user-select: none;           /* Non-prefixed version, currently supported by Chrome, Opera, and many mobile browsers */
+    touch-action: manipulation;  /* Improve touch behavior on some mobile devices */
+}
+p {
+    margin: 0;
+    padding: 0;
+}
+.divsections {
+    color: yellow;
+    font-size: 18px;
+    text-decoration: underline;
+    padding: 10px;
+}
+.button_orange {
+    color: #FFCB30;
+}
+.ltgreentxt {
+    color: #4EF591;
+}
+.pinktxt {
+    color: #FFB3FC;
+}
+.ltbluetxt {
+    color: #2FEBD2;
+}
+.ltred {
+    color: #FFA2A1;
+}
+.level-1 { /* Initially show level 1 */
+}
+.level-2 {
+  display: none; /* Initially hide level 2 */
+}
+.level-3 {
+  display: none; /* Initially hide level 3 */
+}
+.active .level-1 {
+  display: inline-block;
+}
+.active .level-2 {
+  display: inline-block;
+}
+.active3 .level-3 { /* Later setup */
+  display: inline-block;
+}
