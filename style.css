@@ -1,4 +1,4 @@
-body {
+0body {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none;   /* Safari */
     -moz-user-select: none;      /* Firefox */
@@ -47,4 +47,10 @@ p {
 }
 .active3 .level-3 { /* Later setup */
   display: inline-block;
+}
+.details {
+  display: none;
+}
+.yellowtxt {
+  color: yellow;
 }
