@@ -1,4 +1,4 @@
-0body {
+body {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none;   /* Safari */
     -moz-user-select: none;      /* Firefox */
@@ -31,26 +31,19 @@ p {
 .ltred {
     color: #FFA2A1;
 }
-.level-1 { /* Initially show level 1 */
+.level {
+  display: none; /* Initially hide all levels */
 }
-.level-2 {
-  display: none; /* Initially hide level 2 */
-}
-.level-3 {
-  display: none; /* Initially hide level 3 */
-}
-.active .level-1 {
-  display: inline-block;
-}
-.active .level-2 {
-  display: inline-block;
-}
-.active3 .level-3 { /* Later setup */
-  display: inline-block;
+.active {
+  display: block; /* Show the active level */
 }
 .details {
   display: none;
 }
 .yellowtxt {
   color: yellow;
+}
+.crossed-out {
+    text-decoration: line-through;
+    display: inline;
 }
