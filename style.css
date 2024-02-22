@@ -10,6 +10,17 @@ p {
     margin: 0;
     padding: 0;
 }
+span {
+    white-space: pre-line;
+    display: inline-block;
+}
+.whitespace {
+    white-space: pre-line;
+}
+.sameline {
+    white-space: pre-line;
+    display: inline-block;
+}
 .divsections {
     color: yellow;
     font-size: 18px;
