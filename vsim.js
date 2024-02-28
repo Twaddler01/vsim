@@ -30,7 +30,7 @@ for (let i = 0; i < resourcesData.length; i++) {
     resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
     resourcesIndex.convert = 10;
     resourcesIndex.cnt = 0;
-    resourcesIndex.max = 200;
+    resourcesIndex.max = 100;
     const updates = {};
     updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
     updates.print_gather = '<span class="button_orange">[ GATHER ' + resourcesIndex.lbl.toUpperCase() + ' ]';
@@ -43,7 +43,7 @@ for (let i = 0; i < resourcesData.length; i++) {
 
 // objects data array
 const objectsData = [
-    { 
+{ 
     name: 'Twigs', 
     type: 'upgrade', 
     lbl: 'twigs', 
@@ -58,8 +58,24 @@ const objectsData = [
     job: null, 
     consume: null , 
     parentID: null, 
-    },
-    { name: 'tribe_leader', type: 'init', lbl: 'tribe leader', title: 'BECOME TRIBE LEADER', cnt: 0, desc: '', gain: '+1 Tribe Leader', costs: null, job: null, consume: null , parentID: '' },
+}, 
+{ 
+    name: 'Pebbles', 
+    type: 'upgrade', 
+    lbl: 'pebbles', 
+    title: 'Upgrade Pebbles Collection', 
+    cnt: 1, 
+    desc: '', 
+    gain: '+20% Gather Rate', 
+    gather_increase: 1.2, 
+    cost_creep: 1.4, 
+    // need costs to increase per upgrade
+    costs: { 'Twigs': 10, 'Pebbles': 20 }, 
+    job: null, 
+    consume: null , 
+    parentID: null, 
+}, 
+{ name: 'tribe_leader', type: 'init', lbl: 'tribe leader', title: 'BECOME TRIBE LEADER', cnt: 0, desc: '', gain: '+1 Tribe Leader', costs: null, job: null, consume: null , parentID: '' },
 ];
 
 // Iterate over the array and set other variables dynamically
@@ -82,6 +98,7 @@ for (let i = 0; i < objectsData.length; i++) {
     objUpdates.print_costs = '';
     objUpdates.job_lbl = '<p class="yellowtxt">CIVILIAN JOB:</p>';
     objUpdates.consume_lbl = '<p class="yellowtxt">CONSUMES:</p>';
+    objUpdates.maxed = false;
     // Assign updates to resourcesIndex properties
     Object.assign(objectsIndex, objUpdates);
 }
@@ -132,6 +149,14 @@ update_print_resources =
 .con_lbl = 'convert_000' + resourcesIndex.id;
 .con_btn = 'convert_btn_000' + resourcesIndex.id;
 */
+
+// for output testing
+function print(text) {
+    new_div = document.createElement('div');
+    document.body.insertBefore(new_div, document.body.firstChild);
+    new_div.innerHTML = text;
+}
+//print('hello' + resourcesData[0].id);
 
 // pause
 function wait(seconds, callback) {
@@ -363,8 +388,8 @@ addClickEvent('add_active');
 createGoal(0);
 
 // TESTING
-resourcesData[0].cnt = 87;
-resourcesData[1].cnt = 45;
+resourcesData[0].cnt = 187;
+resourcesData[1].cnt = 145;
 
 
 // **** Setup all elements ****
@@ -462,7 +487,7 @@ objectsData
     toggled_details_div.appendChild(gain_detail);
     gain_detail.id = upgradeObject.gain_id;
     gain_detail.className = 'light_small';
-    gain_detail.innerHTML = ' Next: +0 &nbsp;' + upgradeObject.name;
+    gain_detail.innerHTML = ' Next: +' + upgradeObject.gather_increase + '&nbsp;' + upgradeObject.name;
 
     // description
     var description = document.createElement('div');
@@ -500,6 +525,7 @@ objectsData
 
             // Get the data with color styling using CSS classes
             const currentPrint = `<span class="${textClass}">${resource.cnt}/${value} ${item}</span>`;
+
             upgradeObject.print_costs += currentPrint + '<br>';  // Concatenate values
     
             // Print the data
@@ -780,17 +806,20 @@ updateButton.addEventListener("click", function() {
             const resource = resourcesData.find(r => r.lbl === item);
         
             if (resource) {
-                // Push an object with resource.cnt and value into itemsAvailable array
-                const cntToPush = Math.min(resource.cnt, value);
-
                 // Push an object with cntToPush and value into itemsAvailable array
+                const cntToPush = Math.min(resource.cnt, value);
                 itemsAvailable.push({ cnt: cntToPush, value });
-
+        
                 // Determine the class based on the condition
                 const textClass = resource.cnt >= value ? 'ltgreentxt' : 'ltred';
-    
+        
                 // Get the data with color styling using CSS classes
-                const currentPrint = `<span class="${textClass}">${resource.cnt}/${value} ${item}</span>`;
+                let currentPrint = `<span class="${textClass}">${resource.cnt}/${value} ${item}</span>`;
+        
+                if (upgradeObject.maxed === true && value > resource.max) {
+                    currentPrint = `<span class="${textClass}">${resource.cnt}/${value} ${item}***</span>`;
+                }
+        
                 upgradeObject.print_costs += currentPrint + '<br>';  // Concatenate values
         
                 // Print the data
@@ -881,10 +910,27 @@ function purchase_upgrade(costs) {
 
                     // cost creep
                     // Increase costs values by 40% for objects with type 'upgrade' using cost_creep
-                    const costCreep = upgradeObject.cost_creep;  
-                        for (const key in upgradeObject.costs) {
+                    const costCreep = upgradeObject.cost_creep;
+
+                    for (const key in upgradeObject.costs) {
                         if (upgradeObject.costs.hasOwnProperty(key)) {
                             upgradeObject.costs[key] = Math.round(upgradeObject.costs[key] * costCreep);
+                    
+                            const resource = resourcesData.find(r => r.lbl === key);
+                            const costValue = upgradeObject.costs[key];
+                    
+                            // Log the key and value of each item
+                            
+                            let currentPrint = `<span class="${resource.cnt >= costValue ? 'ltgreentxt' : 'ltred'}">${resource.cnt}/${costValue} ${key}`;
+                            
+                            if (costValue > resource.max) {
+                                // If cost exceeds the maximum, add ***
+                                currentPrint += '***';
+                                upgradeObject.maxed = true;
+                            }
+                    
+                            currentPrint += '</span>';
+                            upgradeObject.print_costs += currentPrint + '<br>';  // Concatenate values
                         }
                     }
 
@@ -909,164 +955,3 @@ function purchase_upgrade(costs) {
 //console.log(firstCost.item);      // Accessing 'item' property
 //console.log(firstCost.value);     // Accessing 'value' property
 //console.log(firstCost.resource);  // Accessing 'resource' property
-
-
-//RECONSTRUCTING FUNCTION
-/*
-function start_objects_upgrade() {
-    
-    const filtered_upgradeObject = objectsData.filter(object => object.type === 'upgrade');
-
-    // Check if there are any upgrade objects
-    if (filtered_upgradeObject.length > 0) {
-        filtered_upgradeObject.forEach(upgradeObject => {
-
-            const upgrade_container = document.createElement('div');
-            upgrade_container.id = upgradeObject.id; // twigs_upgrade
-
-            upgrade_section.appendChild(upgrade_container);
-
-            
-            // clear var if '(0)'
-            if (upgradeObject.cnt === 0) {
-                obj_qty = ''
-            } else {
-                obj_qty = '<span class="button_orange">(' + (upgradeObject.cnt + 1) + ')&nbsp</span>';
-            }
-            
-            var allItemsAvailable = true;  // Assume all items are available initially
-            let costsOutput = '';
-
-            // first display update
-            for (const itemName in upgradeObject.costs) {
-                const objCount = upgradeObject.costs[itemName];
-                var resourcesCntValues = resourceValueCNT([itemName]);
-                const currentResource = resourcesData.find(resource => resource.id === itemName);
-                            
-                if (itemName in resourcesCntValues) {
-
-                    // (FIRST RUN) Do not subtract cnt from array
-                    //if (currentResource.cnt >= objCount && allItemsAvailable) {
-                        //currentResource.cnt -= objCount;
-                    //} 
-
-                    const output = `<p class="${currentResource.cnt >= objCount ? 'ltgreentxt' : 'ltred'}">${currentResource.cnt}/${objCount} ${itemName}</p>`;
-                    costsOutput += output;
-
-                    // update new count for object 
-                    upgradeObject.print_costs = costsOutput;
-                                
-                    // Check if the current item is less than its cost
-                    if (currentResource.cnt < objCount) {
-                        allItemsAvailable = false;
-                        upgradeObject.add_button_lbl = `<span class="ltred" id="${upgradeObject.name}_${upgradeObject.type}_add_button">[ ADD ]</span>`;
-                    }
-                } else {
-                    console.log(`Resource ${itemName} not found in resourcesData`);
-                }
-            }
-            
-            // Use the updated costsOutput in the rest of your code
-            upgradeObject.print_costs = costsOutput; //+ new_values;
-
-            //obj_job array
-            if (upgradeObject.job !== null) {
-                for (const item in upgradeObject.job) {
-                    var job_lbl = '<p class="ltred">' + ' 0' + '/' + upgradeObject.consume[item] + ' ' + item + '</p>';
-                    upgradeObject.job_lbl += job_lbl;
-                }
-            }
-            else {
-                upgradeObject.job_lbl = '';
-            }
-            
-            //obj_consume array
-            if (upgradeObject.consume !== null) {
-                for (const item in upgradeObject.consume) {
-                    var obj_consume = '<p class="ltred">' + ' 0' + '/' + upgradeObject.consume[item] + ' ' + item + '</p>';
-                    upgradeObject.consume_lbl += upgradeObject.consume;
-                }
-            }
-            else {
-                upgradeObject.consume_lbl = '';
-            }
-            
-            // Check if all items are available
-            if (allItemsAvailable) {
-                // Change [ ADD ] to green and allow purchase
-                upgradeObject.add_button_lbl = `<span class="ltgreentxt" id="${upgradeObject.name}_${upgradeObject.type}_add_button">[ ADD ]</span>`;
-                
-                // WIP
-                // **** Add click event listener using event delegation
-                upgrade_container.addEventListener('click', function (event) {
-                    if (event.target.id === upgradeObject.name + '_' + upgradeObject.type + '_add_button' && allItemsAvailable) {
-                        // Subtract costs and update display
-                        let newCostsOutput = '';  // Use a new variable to store the updated costs
-
-                        for (const itemName in upgradeObject.costs) {
-                            const objCount = upgradeObject.costs[itemName];
-                            var resourcesCntValues = resourceValueCNT([itemName]);
-                            const currentResource = resourcesData.find(resource => resource.id === itemName);
-
-                            if (itemName in resourcesCntValues) {
-
-                                if (currentResource.cnt >= objCount) {
-                                    // Subtract cnt from array
-                                    currentResource.cnt -= objCount;
-                                    // assign new values back to array
-
-                                }
-
-                                const output = `<p class="${currentResource.cnt >= objCount ? 'ltgreentxt' : 'ltred'}">${currentResource.cnt}/${objCount} ${itemName}</p>`;
-                                newCostsOutput += output;
-                                
-                                // update new count for object 
-                                upgradeObject.print_costs = newCostsOutput;
-                                
-                                // Check if the current item is less than its cost
-                                if (currentResource.cnt < objCount) {
-                                    allItemsAvailable = false;
-                                    upgradeObject.add_button_lbl = `<span class="ltred" id="${upgradeObject.name}_${upgradeObject.type}_add_button">[ ADD ]</span>`;
-                                }
-                            } else {
-                                console.log(`Resource ${itemName} not found in resourcesData`);
-                            }
-                        }
-                        
-                        // TESTING
-                        get_resource_values();
-                        console.log(objectsData.current_resources_cnt);
-                        
-                        // Update the costs in the upgradeObject
-                        upgradeObject.print_costs = newCostsOutput;
-
-                        // Update the upgrade_container with the new data
-                        title = '<hr class="divider" width=30% align="left"> ' + '<span id="' + upgradeObject.button + '" onclick="toggleDetails(\'' + upgradeObject.button + '\', \'' + upgradeObject.details + '\', ' + '\'' + upgradeObject.title + '\')"> [ - ] <span class="button_orange"> ' + upgradeObject.title + '&nbsp;</span></span>' + obj_qty + upgradeObject.add_button_lbl;
-                        // show details on click
-                        upgradeObject.button.innerHTML = '[ - ] <span class="button_orange">' + title + '&nbsp;</span> ';
-                        description = '<div id="' + upgradeObject.details + '" style="display:block">...' + upgradeObject.desc;
-                        upgradeObject.gain = '<p class="ltgreentxt">' + upgradeObject.gain + '</p>';
-                        
-                        upgrade_container.innerHTML = title + description + upgradeObject.gain + upgradeObject.costs_lbl + upgradeObject.print_costs + upgradeObject.job_lbl + upgradeObject.consume_lbl + '</div>'; // </div> to end "details"
-                    }
-                });
-            } else {
-                upgradeObject.add_button_lbl = `<span class="ltred" id="${upgradeObject.name}_${upgradeObject.type}_add_button">[ ADD ]</span>`;
-            }
-            
-            upgradeObject.print_costs = costsOutput;
-            
-            // shows object
-            title = '<hr class="divider" width=30% align="left"> ' + '<span id="' + upgradeObject.button + '" onclick="toggleDetails(\'' + upgradeObject.button + '\', \'' + upgradeObject.details + '\', ' + '\'' + upgradeObject.title + '\')"> [ + ] <span class="button_orange"> ' + upgradeObject.title + '&nbsp;</span></span>' + obj_qty + upgradeObject.add_button_lbl;
-            description = '<div id="' + upgradeObject.details + '" style="display:none">...' + upgradeObject.desc;
-            upgradeObject.gain = '<p class="ltgreentxt">' + upgradeObject.gain + '</p>';
-            upgrade_container.innerHTML = title + description + upgradeObject.gain + upgradeObject.costs_lbl + upgradeObject.print_costs + upgradeObject.job_lbl + upgradeObject.consume_lbl + '</div>'; // </div> to end "details"
-            
-            
-        });
-    }
-
-} // end function: start_objects_upgrade()
-// Example:
-//start_objects_upgrade();
-*/
