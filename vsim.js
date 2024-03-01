@@ -1,88 +1,11 @@
-//import { resourcesData } from './data.js';
+import { add_resourcesData, add_upgradeData, add_buildingData } from './data.js'; // Array data
 //`
 
-// **** global variables ****
+// **** imported arrays ****
 
-// resources data array
-const resourcesData = [
-    { id: 'twigs', lbl: 'Twigs', level: 1, makes: 'sticks' },
-    { id: 'pebbles', lbl: 'Pebbles', level: 1, makes: 'stones' },
-    { id: 'pine_needles', lbl: 'Pine Needles', level: 1, makes: 'leaves' },
-    { id: 'sticks', lbl: 'Sticks', level: 2, makes: 'logs' },
-    { id: 'stones', lbl: 'Stones', level: 2, makes: 'rocks' },
-    { id: 'leaves', lbl: 'Leaves', level: 2, makes: 'brush' },
-    { id: 'logs', lbl: 'Logs', level: 3, makes: 'none' },
-    { id: 'rocks', lbl: 'Rocks', level: 3, makes: 'none' },
-    { id: 'brush', lbl: 'Brush', level: 3, makes: 'none' },
-];
-
-// Iterate over the array and set other variables dynamically
-for (let i = 0; i < resourcesData.length; i++) {
-    const resourcesIndex = resourcesData[i];
-    resourcesIndex.res_lbl = 'resource_' + resourcesIndex.id;
-    resourcesIndex.gatherDiv = 'gather_div_' + resourcesIndex.id;
-    resourcesIndex.gather_btn = 'gather_btn_' + resourcesIndex.id;
-    resourcesIndex.gather_lbl = 'gather_' + resourcesIndex.id;
-    resourcesIndex.gather_rate = 1;
-    // whole convert div = con_id
-    resourcesIndex.con_id = 'conDiv_' + resourcesIndex.id;
-    resourcesIndex.con_lbl = 'convert_' + resourcesIndex.id;
-    resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
-    resourcesIndex.convert = 10;
-    resourcesIndex.cnt = 0;
-    resourcesIndex.max = 500;
-    const updates = {};
-    updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
-    updates.print_gather = '<span class="button_orange">[ GATHER ' + resourcesIndex.lbl.toUpperCase() + ' ]';
-    updates.print_gather2 = '<span class="ltgreentxt">&nbsp;+' + resourcesIndex.gather_rate + ' ' + resourcesIndex.lbl.toUpperCase();
-    updates.print_convert = '<span class="ltred">' + resourcesIndex.cnt + ' / ' + resourcesIndex.convert + ' ' + resourcesIndex.lbl + '</span>';
-    updates.print_convert2 = '<span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resourcesIndex.makes.toUpperCase() + ' ] </span';
-    // Assign updates to resourcesIndex properties
-    Object.assign(resourcesIndex, updates);
-}
-
-const upgradeData = [
-    { id: 'twigs', costs: { 'Twigs': 20, 'Pebbles': 10 } }, 
-    { id: 'pebbles', costs: { 'Twigs': 10, 'Pebbles': 20 } }, 
-    { id: 'pine_needles', costs: { 'Twigs': 10, 'Pebbles': 10, 'Pine Needles': 10 } }, 
-];
-
-// Iterate over the array and set other variables dynamically
-for (let i = 0; i < upgradeData.length; i++) {
-    const upgradeIndex = upgradeData[i];
-    const upgradeUpdates = {};
-    // Find the corresponding resource in resourcesData
-    const linkedResource = resourcesData.find(resource => resource.id === upgradeIndex.id);    
-    if (linkedResource) {
-        // Dynamically assign id from upgradeData
-        // upgrade_container div
-        upgradeIndex.id = linkedResource.id + '_upgrade';
-        upgradeIndex.lbl = linkedResource.lbl;
-    }
-    upgradeUpdates.first_line_div_id = upgradeIndex.id + '_first_line_div';
-    upgradeUpdates.toggled_details_div = upgradeIndex.id + '_details';
-    upgradeUpdates.costs_div = upgradeIndex.id + '_costs_div';
-    upgradeUpdates.object_count_id = upgradeIndex.id + '_object_count_id';
-    upgradeUpdates.gain_id = upgradeIndex.id + '_gain';
-    // [ + ] [ - ] button
-    upgradeUpdates.button = upgradeIndex.id + '_button';
-    // buy button -- UPGRADE
-    upgradeUpdates.add_button = upgradeIndex.id + '_add_button';
-    // buy button -- ADD
-    //upgradeUpdates.add_button_ADD = '<span class="ltred" id="' + upgradeIndex.id + '_add_button' + '">[ ADD ]</span>';
-    upgradeUpdates.title = 'Upgrade ' + upgradeIndex.lbl + ' Collection';
-    upgradeUpdates.cnt = 0;
-    upgradeUpdates.gather_increase = 1.2;
-    upgradeUpdates.cost_creep = 1.4;
-    upgradeUpdates.desc = 'Use your experiences from collecting ' + upgradeIndex.lbl + ' and other things to increase the rate of collecting ' + upgradeIndex.lbl + '.';
-    upgradeUpdates.print_costs = '';
-    upgradeUpdates.job = null;
-    upgradeUpdates.consume = null;
-    upgradeUpdates.parentID = null;
-    upgradeUpdates.maxed = false;
-    // Assign updates to resourceslIndex properties
-    Object.assign(upgradeIndex, upgradeUpdates);
-}
+const resourcesData = add_resourcesData(); // From data.js
+const upgradeData = add_upgradeData(); // From data.js
+const buildingData = add_buildingData(); // From data.js
 
 // TESTING
 for (let i = 0; i < upgradeData.length; i++) {
@@ -134,7 +57,63 @@ wait(5, function() {
   // Add your code here for the delayed execution
 }); */
 
-// show element
+// WIP: adding add_button usage
+// IN INTERVAL: update costs data
+function showObjectCosts(objectArray, parentID) {
+    const createdIDs = [];
+
+    objectArray.forEach(object => {
+        var createdElement = document.getElementById(object.id + '_costs_div');
+
+        if (!createdElement) {
+            createdElement = document.createElement('div');
+            createdElement.id = object.id + '_costs_div';
+            parentID.appendChild(createdElement);
+        }
+        
+        createdIDs.push(createdElement.id);
+
+        setInterval(() => {
+            const object_costs = object.costs;
+            let fetch_cnt = '';
+            for (const [item, value] of Object.entries(object_costs)) {
+                const fetch_resource = resourcesData.find(r => r.lbl === item);
+
+                // upgradeUpdates.add_button = 000.id + '_upgrade' + '_add_button'; (ex: twigs_upgrade_add_button)
+                // buildingUpdates.add_button = 000.id + '_add_button'; (ex: primitive_shelter_building_add_button)
+                // get all ids for add_button
+                
+                if (object.type === 'upgrade' && fetch_resource) {
+                    let id_format = object.id + '_upgrade' + '_add_button';
+                    let upgrade_button = document.getElementById(id_format);
+                }
+                
+                if (object.type === 'building' && fetch_resource) {
+                    let id_format = object.id + '_add_button';
+                    let building_button = document.getElementById(id_format);
+
+                }
+
+                if (fetch_resource) {
+                    const colorClass = (fetch_resource.cnt >= value) ? 'ltgreentxt' : 'ltred';
+                    fetch_cnt += '<span class="' + colorClass + '">';
+                    fetch_cnt += '<span id="' + object.id + '_' + item + '_cnt' + '">' + fetch_resource.cnt + '</span>&nbsp;/&nbsp;' + value + '&nbsp;' + item.toLowerCase();
+                    fetch_cnt += '</span>';
+                    fetch_cnt += '<br>';
+                }
+            }
+            createdElement.innerHTML = fetch_cnt;
+        }, 5000);
+    });
+
+    // confirm ids
+    return createdIDs;
+}
+// USAGE:
+// buildingData.forEach(buildingObject => {
+//     showObjectCosts([buildingObject], print_costs_lbl.id);
+// });
+
 function showElementID(elementId) {
     var element = document.getElementById(elementId);
     if (element) {
@@ -209,7 +188,7 @@ function update_tribe(tribe_first_run) {
             total_population += item.pop;
             var population_lbl = item.lbl;
             population.innerHTML = `<p class="pinktxt">` + population_lbl + `: ` + population_amt + `</p>`;
-            section.appendChild(population);
+            tribe_section.appendChild(population);
         });
 
         var total_lbl = document.createElement('p');
@@ -221,7 +200,7 @@ function update_tribe(tribe_first_run) {
         var tribeLeader = document.getElementById('tribe_leader');
 
         // Insert total_lbl before the Tribe Leader
-        section.insertBefore(total_lbl, tribeLeader);
+        tribe_section.insertBefore(total_lbl, tribeLeader);
     }
     // next update
 }
@@ -323,6 +302,7 @@ function goalCompleted(goalId) {
     }
 }
 
+// WIP: eventually add functions.js with a main.js
 // *** main div sections ****
 
 createNewElement('div', 'vsim_title', null, null, 'body');
@@ -332,6 +312,7 @@ createNewElement('div', 'tribe_leader_obj', null, null, 'tribe_sect_id');
 createNewElement('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
 createNewElement('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
 createNewElement('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p>', 'body');
+createNewElement('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p>', 'body');
 
 // upgrade object
 // createObject('twigs_upgrade', 'tribe_sect_id');
@@ -350,6 +331,7 @@ vsim_title.appendChild(vsim_h1);
 
 showElementID('vsim_title');
 showElementID('tribe_sect_id');
+update_tribe(true);
 addClickEvent('add_active');
 createGoal(0);
 
@@ -362,9 +344,113 @@ resourcesData[1].cnt = 45;
 
 // OBJECTS
 
+// *** BUILDING DATA
+showElementID('building_sect_id');
+var building_section = document.getElementById('building_sect_id');
+
+buildingData.forEach(buildingObject => {
+    
+    buildingObject.print_costs = '';
+    
+    // full container
+    var building_container = document.createElement('div');
+    building_container.id = buildingObject.id;
+    building_section.appendChild(building_container);
+
+    // define object first line
+    var first_line_div = document.createElement('div');
+    first_line_div.id = buildingObject.first_line_div_id;
+    building_container.appendChild(first_line_div);
+    // define object toggle details
+    var toggled_details_div = document.createElement('div');
+    // hide details initially
+    toggled_details_div.id = buildingObject.toggled_details_div;
+    toggled_details_div.style.display = 'none';
+    building_container.appendChild(toggled_details_div);
+
+    // [ + ] details initial
+    var button_toggle = document.createElement('span');
+    first_line_div.appendChild(button_toggle);
+    button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + buildingObject.button + '"> [ + ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
+
+    // Assuming upgradeObject.button is the ID of the button element
+    var toggleButton = document.getElementById(buildingObject.button);
+
+    // Add an onclick event listener to the button
+    toggleButton.addEventListener('click', function() {
+        // Toggle the display property of toggled_details_div
+        if (toggled_details_div.style.display === 'none') {
+            toggled_details_div.style.display = 'block';
+            // Change the button text to [ - ]
+            toggleButton.innerHTML = '<span id="' + buildingObject.button + '"> [ - ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
+        } else {
+            toggled_details_div.style.display = 'none';
+            // Change the button text to [ + ]
+            toggleButton.innerHTML = '<span id="' + buildingObject.button + '"> [ + ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
+        }
+    });
+    
+    // object count span
+    var object_count = document.createElement('span');
+    object_count.id = buildingObject.object_count_id;
+    object_count.className = 'button_orange';
+    first_line_div.appendChild(object_count);
+    object_count.innerHTML = '(' + buildingObject.cnt + ')&nbsp';
+
+    if (buildingObject.cnt === 1) {
+        document.getElementById(object_count.id).innerHTML = ''
+    }
+    
+    var add_button_lbl = document.createElement('span');
+    first_line_div.appendChild(add_button_lbl);
+    add_button_lbl.className = 'ltred';
+    add_button_lbl.id = buildingObject.add_button;
+    add_button_lbl.innerHTML = '[ BUILD ]';
+
+    // *** details start
+    // gain label
+    var gain_lbl = document.createElement('div');
+    gain_lbl.className = 'ltgreentxt';
+    // need id and content
+    gain_lbl.id = buildingObject.gain_id;
+    gain_lbl.innerHTML = buildingObject.gain_lbl;
+    toggled_details_div.appendChild(gain_lbl);
+ 
+    // gain_detail
+    var gain_detail = document.createElement('div');
+    toggled_details_div.appendChild(gain_detail);
+    gain_detail.id = buildingObject.gain_detail_id;
+    gain_detail.className = 'light_small';
+    gain_detail.innerHTML = buildingObject.gain_detail_lbl;
+
+    // description
+    var description = document.createElement('div');
+    toggled_details_div.appendChild(description);
+    description.style.maxWidth = '60%';
+    description.innerHTML = buildingObject.desc;
+
+    // costs display (label)
+    var costs_lbl = document.createElement('div');
+    toggled_details_div.appendChild(costs_lbl);
+    costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
+
+    // costs display (data)
+    var print_costs_lbl = document.createElement('div');
+    print_costs_lbl.id = buildingObject.costs_div;
+    toggled_details_div.appendChild(print_costs_lbl);
+
+    // Call the showObjectCosts function with the buildingData and the ID of print_costs_lbl
+    showObjectCosts([buildingObject], print_costs_lbl.id);
+
+
+
+    
+
+}); // *** END: BUILDING UPGRADE DATA
+
 // *** UPGRADE DATA
 showElementID('upgrade_sect_id');
-upgrade_section = document.getElementById('upgrade_sect_id');
+var upgrade_section = document.getElementById('upgrade_sect_id');
 
 upgradeData.forEach(upgradeObject => {
 
@@ -379,7 +465,6 @@ upgradeData.forEach(upgradeObject => {
     upgrade_container.id = upgradeObject.id;
     upgrade_section.appendChild(upgrade_container);
 
-    // WIP: NEED ID ?
     // define object first line
     var first_line_div = document.createElement('div');
     first_line_div.id = upgradeObject.first_line_div_id;
@@ -432,7 +517,7 @@ upgradeData.forEach(upgradeObject => {
 
     // *** details start
     // gain label
-    gain_lbl = document.createElement('div');
+    var gain_lbl = document.createElement('div');
     gain_lbl.className = 'ltgreentxt';
     gain_lbl.innerHTML = '+20% Gather Rate';
     toggled_details_div.appendChild(gain_lbl);
@@ -519,9 +604,11 @@ upgradeData.forEach(upgradeObject => {
 // RESOURCES DATA
 resourcesData.forEach(resource => {
 
+// END: global resource storage
+
     // RESOURCES
     showElementID('resources_sect_id');
-    resources_section = document.getElementById('resources_sect_id');
+    var resources_section = document.getElementById('resources_sect_id');
 
     var resourcesContainer = document.createElement('div');
     resourcesContainer.id = resource.res_lbl;
@@ -540,7 +627,7 @@ resourcesData.forEach(resource => {
 
     // GATHER
     showElementID('gather_sect_id');
-    gather_section = document.getElementById('gather_sect_id');
+    var gather_section = document.getElementById('gather_sect_id');
 
     var gatherContainer = document.createElement('div');
     gatherContainer.id = resource.gatherDiv;
@@ -570,7 +657,7 @@ resourcesData.forEach(resource => {
     
     // CONVERT
     //showElementID('convert_sect_id');
-    convert_section = document.getElementById('convert_sect_id');
+    var convert_section = document.getElementById('convert_sect_id');
 
     var convertContainer = document.createElement('div');
     convertContainer.id = resource.con_id;
@@ -670,11 +757,9 @@ interval_var_updates(); // temp for TESTING
 
 }); // END: RESOURCES DATA
 
-
-// **** temp for TESTING: manual refresh
-
 // Function to update a value from the array
 function updateOnClick(resource) {
+
     // update gather rate
     document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
     // update resource counts
@@ -691,7 +776,26 @@ function updateOnClick(resource) {
     } else {
         document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
     }
-/* test 
+    /* function testing
+    // update building cnt display
+    buildingData.forEach(building => {
+        const object_costs = building.costs;
+        let fetch_cnt = '';
+        for (const [item, value] of Object.entries(object_costs)) {
+            const fetch_resource = resourcesData.find(r => r.lbl === item);
+            if (fetch_resource) {
+                const colorClass = (fetch_resource.cnt >= value) ? 'ltgreentxt' : 'ltred';
+                fetch_cnt += '<span class="' + colorClass + '">';
+                fetch_cnt += '<span id="' + building.id + '_' + item + '_cnt' + '">' + fetch_resource.cnt + '</span>&nbsp;/&nbsp;' + value + '&nbsp;' + item.toLowerCase();
+                fetch_cnt += '</span>';
+                fetch_cnt += '<br>';
+            }
+        }
+        var ResCnt = document.getElementById(building.ResCnt);
+        ResCnt.innerHTML = fetch_cnt;
+    });*/
+
+/* interval test 
 }
 
 const updateButton = document.createElement("button");
@@ -706,13 +810,24 @@ updateButton.addEventListener("click", function() {
     resourcesData.forEach(resource => {
         updateOnClick(resource);
     });
-test */
+interval test  */
     // *** update UPGRADE OBJECTS
     // Reset the 'deducted' property for all resources
-    resourcesData.forEach(resource => {
+    resourcesData.forEach((resource, index) => {
         if (resource.hasOwnProperty('deducted')) {
             resource.deducted = false;
         }
+    
+        // global live updates of resource cnt
+        var resource_div = document.getElementById('live_cnt_' + resource.id);
+            if (!resource_div) {
+            resource_div = document.createElement('div');
+            resource_div.style.display = 'none';
+            var resource_live_cnt = 'live_cnt_' + resource.id;
+            resource_div.id = resource.resource_live_cnt;
+            document.body.appendChild(resource_div);
+        }
+        resource_div.innerHTML = resource.cnt;
     });
 
     upgradeData.forEach(upgradeObject => {
@@ -787,9 +902,9 @@ test */
         }
 
     }); // end objectsData loop
-    /* test
+    /* interval test 
 }); // end event listener
-test */
+interval test  */
 function purchase_upgrade(costs) {
     if (!(Array.isArray(costs))) {
         costs = [costs];
