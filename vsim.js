@@ -36,7 +36,7 @@ const tribeData = [
 
 // for output testing
 function print(text, json) {
-    new_div = document.createElement('div');
+    let new_div = document.createElement('div');
     document.body.insertBefore(new_div, document.body.firstChild);
     if (json === 'y') {
         new_div.innerHTML = JSON.stringify(text);
@@ -57,12 +57,20 @@ wait(5, function() {
   // Add your code here for the delayed execution
 }); */
 
+
+
+
+
+// first try
 // WIP: adding add_button usage
 // IN INTERVAL: update costs data
-function showObjectCosts(objectArray, parentID) {
+function addObjectUpdates(objectArray, parentID) {
+    // for testing ids
     const createdIDs = [];
-
+    var itemsAvailable = [];
+    
     objectArray.forEach(object => {
+
         var createdElement = document.getElementById(object.id + '_costs_div');
 
         if (!createdElement) {
@@ -70,49 +78,232 @@ function showObjectCosts(objectArray, parentID) {
             createdElement.id = object.id + '_costs_div';
             parentID.appendChild(createdElement);
         }
-        
+
+        // for testing ids
         createdIDs.push(createdElement.id);
 
         setInterval(() => {
+        
+            var object_count = document.getElementById(object.object_count_id);
+            if (object.cnt === 0) {
+                object_count.innerHTML = '';
+            } else {
+                object_count.innerHTML = '(' + object.cnt + ')&nbsp';
+            }
+            resourcesData.forEach((resource, index) => {
+                if (resource.hasOwnProperty('deducted')) {
+                    resource.deducted = false;
+                }
+            });
+            if (object.hasOwnProperty('applied')) {
+                object.applied = false;
+            }    
             const object_costs = object.costs;
             let fetch_cnt = '';
             for (const [item, value] of Object.entries(object_costs)) {
                 const fetch_resource = resourcesData.find(r => r.lbl === item);
-
-                // upgradeUpdates.add_button = 000.id + '_upgrade' + '_add_button'; (ex: twigs_upgrade_add_button)
-                // buildingUpdates.add_button = 000.id + '_add_button'; (ex: primitive_shelter_building_add_button)
-                // get all ids for add_button
-                
-                if (object.type === 'upgrade' && fetch_resource) {
-                    let id_format = object.id + '_upgrade' + '_add_button';
-                    let upgrade_button = document.getElementById(id_format);
-                }
-                
-                if (object.type === 'building' && fetch_resource) {
-                    let id_format = object.id + '_add_button';
-                    let building_button = document.getElementById(id_format);
-
-                }
-
                 if (fetch_resource) {
-                    const colorClass = (fetch_resource.cnt >= value) ? 'ltgreentxt' : 'ltred';
+                    // flat increase of cost_creep based on new values
+                    const adjustedCost = value;
+                    let fetch_resource_rnd = Math.round(fetch_resource.cnt * 10) / 10;                    const cntToPush = Math.min(fetch_resource_rnd, adjustedCost);
+                    const colorClass = (fetch_resource_rnd >= adjustedCost) ? 'ltgreentxt' : 'ltred';
+                    itemsAvailable.push({ cnt: cntToPush, adjustedCost });
+                
                     fetch_cnt += '<span class="' + colorClass + '">';
-                    fetch_cnt += '<span id="' + object.id + '_' + item + '_cnt' + '">' + fetch_resource.cnt + '</span>&nbsp;/&nbsp;' + value + '&nbsp;' + item.toLowerCase();
-                    fetch_cnt += '</span>';
-                    fetch_cnt += '<br>';
-                }
+                    fetch_cnt += '<span id="' + object.id + '_' + item + '_cnt' + '">' + fetch_resource_rnd + '</span>&nbsp;/&nbsp;' + adjustedCost + '&nbsp;' + item.toLowerCase();
+
+                    if (adjustedCost > fetch_resource.max) {
+                        fetch_cnt += '***';
+                        object.maxed = true;
+                    }
+            
+                    fetch_cnt += '</span><br>';
+                }           
             }
             createdElement.innerHTML = fetch_cnt;
-        }, 5000);
+            var allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
+            
+            // Check if the upgrade has already been applied
+            if (!object.applied) {
+                // Check if all object_costs values can be deducted
+                var allValuesAvailable = Object.entries(object_costs).every(([item, value]) => {
+                    const resource = resourcesData.find(r => r.lbl === item);
+                    return resource && resource.cnt >= value && !resource.deducted;
+                });
+
+                var id_format = object.id + '_add_button';
+                var update_add_button = document.getElementById(id_format);
+
+                if (allValuesAvailable) {
+                    // Add a 'update-button' class and a 'data-id' attribute
+                    update_add_button.className = 'ltgreentxt';
+                    update_add_button.classList.add('update-button');
+                    update_add_button.setAttribute('data-id', id_format);
+                    update_add_button.setAttribute('data-object', JSON.stringify(object));
+
+                    // function handlePurchaseClick()
+                    update_add_button.addEventListener('click', handlePurchaseClick);
+                    
+                }
+                if (!allValuesAvailable) {
+                    let update_add_button = document.getElementById(id_format);
+                    update_add_button.className = 'ltred';
+                }
+            }
+        }, 2000);
     });
 
-    // confirm ids
+    // for testing ids
     return createdIDs;
 }
 // USAGE:
 // buildingData.forEach(buildingObject => {
-//     showObjectCosts([buildingObject], print_costs_lbl.id);
+//     addObjectUpdates([buildingObject], print_costs_lbl.id);
 // });
+
+// Outside the main function, define the click event handler
+function handlePurchaseClick(event) {
+    if (event.target.classList.contains('update-button')) {
+        // Retrieve the associated data attributes
+        // *** Method has possible bug, use ForEach if required
+        const id_format = event.target.getAttribute('data-id');
+        const object = JSON.parse(event.target.getAttribute('data-object'));
+
+        // Reset the color of all buttons
+        document.querySelectorAll('.update-button').forEach(button => {
+            button.className = 'ltgreentxt'; // or set the default color class
+        });
+
+        for (const [item, value] of Object.entries(object.costs)) {
+            let fetch_resource = resourcesData.find(r => r.lbl === item);
+            let update_add_button = document.getElementById(id_format);
+
+            if (fetch_resource && fetch_resource.cnt >= value && !fetch_resource.deducted) {
+                fetch_resource.cnt -= value;
+                fetch_resource.deducted = true;
+            }
+        }
+
+        var allValuesAvailable = Object.entries(object.costs).every(([item, value]) => {
+            const resource = resourcesData.find(r => r.lbl === item);
+            return resource && resource.cnt >= value && !resource.deducted;
+        });
+
+        if (!allValuesAvailable) {
+            let update_add_button = document.getElementById(id_format);
+            update_add_button.className = 'ltred';
+        }
+
+        // *** object specific actions ***
+
+        if (object.type === 'upgrade') {
+            // upgradeData array only
+            const fetch_object = upgradeData.find(u => u.id === object.id);
+            
+            fetch_object.cnt += 1;
+            fetch_object.applied = true;
+            
+            // resource gain
+            let resource_gain = resourcesData.find(r => r.lbl === fetch_object.lbl);
+            resource_gain.gather_rate *= fetch_object.gather_increase;
+            resource_gain.gather_rate = Math.round(resource_gain.gather_rate * 10) / 10;
+            
+            // gsin details
+            let gain_detail = document.getElementById(fetch_object.gain_id);
+            let next_rate = resource_gain.gather_rate;
+            next_rate *= fetch_object.gather_increase;
+            next_rate = Math.round(next_rate * 10) / 10;
+            gain_detail.className = 'light_small';
+            gain_detail.innerHTML = ' Next: +' + next_rate + '&nbsp;' + fetch_object.lbl.toLowerCase();
+            
+            // cost creep (same for all objects right now)
+            const costCreep = fetch_object.cost_creep;
+            const object_costs = fetch_object.costs;
+            let fetch_cnt = '';
+            for (const key in object_costs) {
+                if (object_costs.hasOwnProperty(key)) {
+                    object_costs[key] = Math.round(object_costs[key] * costCreep);
+                    const costValue = object_costs[key];
+                    const fetch_resource = resourcesData.find(r => r.lbl === key);
+                    fetch_resource.cnt = Math.round(fetch_resource.cnt * 10) / 10;                    
+
+                    if (fetch_resource) {
+                        const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
+                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}`;
+            
+                        if (costValue > fetch_resource.max) {
+                            fetch_cnt += '***';
+                            fetch_object.maxed = true;
+                        }
+            
+                        fetch_cnt += '</span><br>';
+                    }
+                }
+            }
+            
+            // Update the HTML output
+            let update_output = document.getElementById(fetch_object.id + '_costs_div');
+            update_output.innerHTML = fetch_cnt;
+
+        } // end upgrade object if
+
+        if (object.type === 'building') {
+            // buildingData array only
+            let fetch_object = buildingData.find(u => u.id === object.id);
+            
+            fetch_object.cnt += 1;
+            fetch_object.applied = true;
+
+            // cost creep (same for all objects right now)
+            const costCreep = fetch_object.cost_creep;
+            const object_costs = fetch_object.costs;
+            let fetch_cnt = '';
+            for (const key in object_costs) {
+                if (object_costs.hasOwnProperty(key)) {
+                    object_costs[key] = Math.round(object_costs[key] * costCreep);
+                    const costValue = object_costs[key];
+                    const fetch_resource = resourcesData.find(r => r.lbl === key);
+            
+                    if (fetch_resource) {
+                        const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
+                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}`;
+            
+                        if (costValue > fetch_resource.max) {
+                            fetch_cnt += '***';
+                            fetch_object.maxed = true;
+                        }
+            
+                        fetch_cnt += '</span><br>';
+                    }
+                }
+            }
+            
+            // Update the HTML output
+            let update_output = document.getElementById(fetch_object.id + '_costs_div');
+            update_output.innerHTML = fetch_cnt;
+
+        } // end building object if
+
+/*
+        // uograde gain
+        const resource_gain = resourcesData.find(r => r.lbl === object.lbl);
+        resource_gain.gather_rate *= object.gather_increase;
+        resource_gain.gather_rate = Math.round(resource_gain.gather_rate * 10) / 10;
+                    
+        // display current/next rate
+        const gain_detail = document.getElementById(object.gain_id);
+        var next_rate = resource_gain.gather_rate;
+        next_rate *= object.gather_increase;
+        next_rate = Math.round(next_rate * 10) / 10;
+        gain_detail.className = 'light_small';
+        gain_detail.innerHTML = ' Next: +' + next_rate + '&nbsp;' + object.lbl.toLowerCase();
+*/
+
+
+
+
+    }
+}
 
 function showElementID(elementId) {
     var element = document.getElementById(elementId);
@@ -336,8 +527,10 @@ addClickEvent('add_active');
 createGoal(0);
 
 // TESTING
-resourcesData[0].cnt = 87;
-resourcesData[1].cnt = 45;
+resourcesData[0].cnt = 500;
+resourcesData[1].cnt = 500;
+resourcesData[2].cnt = 500;
+
 
 
 // **** Setup all elements ****
@@ -395,11 +588,6 @@ buildingData.forEach(buildingObject => {
     object_count.id = buildingObject.object_count_id;
     object_count.className = 'button_orange';
     first_line_div.appendChild(object_count);
-    object_count.innerHTML = '(' + buildingObject.cnt + ')&nbsp';
-
-    if (buildingObject.cnt === 1) {
-        document.getElementById(object_count.id).innerHTML = ''
-    }
     
     var add_button_lbl = document.createElement('span');
     first_line_div.appendChild(add_button_lbl);
@@ -439,12 +627,11 @@ buildingData.forEach(buildingObject => {
     print_costs_lbl.id = buildingObject.costs_div;
     toggled_details_div.appendChild(print_costs_lbl);
 
-    // Call the showObjectCosts function with the buildingData and the ID of print_costs_lbl
-    showObjectCosts([buildingObject], print_costs_lbl.id);
+    // Call the addObjectUpdates function with the buildingData and the ID of print_costs_lbl
+    addObjectUpdates([buildingObject], print_costs_lbl.id);
 
 
 
-    
 
 }); // *** END: BUILDING UPGRADE DATA
 
@@ -545,66 +732,25 @@ upgradeData.forEach(upgradeObject => {
     print_costs_lbl.id = upgradeObject.costs_div;
     toggled_details_div.appendChild(print_costs_lbl);
 
+    // Call the addObjectUpdates function with the buildingData and the ID of print_costs_lbl
+    addObjectUpdates([upgradeObject], print_costs_lbl.id);
+
     // WIP hiding
     var job_lbl = document.createElement('div');
     toggled_details_div.appendChild(job_lbl);
     job_lbl.innerHTML = '<p class="yellowtxt">CIVILIAN JOB:</p>';
-    job_lbl.style.display = 'none';
+    job_lbl.style.display = 'none'; // temp
     
     // WIP hiding
     var consume_lbl = document.createElement('div');
     toggled_details_div.appendChild(consume_lbl);
     consume_lbl.innerHTML = '<p class="yellowtxt">CONSUMES:</p>';
-    consume_lbl.style.display = 'none';
+    consume_lbl.style.display = 'none'; // temp
 
-    // object costs data
-    // INITIAL DISPLAY ONLY
-    const object_costs = upgradeObject.costs;
-    const itemsAvailable = [];
-    
-    for (const [item, value] of Object.entries(object_costs)) {
-        const resource = resourcesData.find(r => r.lbl === item);
-        const item_display = item.toLowerCase();
-
-        if (resource) {
-            const textClass = resource.cnt >= value ? 'ltgreentxt' : 'ltred';
-            const currentPrint = `<span class="${textClass}">${resource.cnt} / ${value} ${item_display}</span>`;
-            
-            itemsAvailable.push({ cnt: resource.cnt, value });
-            upgradeObject.print_costs += currentPrint + '<br>';
-            
-            // Print the data
-            const costs_div = document.getElementById(upgradeObject.costs_div);
-            costs_div.innerHTML = upgradeObject.print_costs;
-        }
-    }
-    
-    // WIP: needs to be rechecked after any purchase
-    // Check if all .cnt values are greater than or equal to their corresponding value
-    const allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
-        
-    // Perform an action if all values are available
-    if (allValuesAvailable) {
-        var update_add_button = document.getElementById(upgradeObject.add_button);
-        update_add_button.className = 'ltgreentxt';
-    }
-
-    // usung this fornat in div elements
-    // first line / details
-    // first_line_div = button_toggle + object_count + 
-    
 }); // *** END: OBJECTS UPGRADE DATA
-
-// *********************
-// *********************
-// *********************
-// *********************
-
 
 // RESOURCES DATA
 resourcesData.forEach(resource => {
-
-// END: global resource storage
 
     // RESOURCES
     showElementID('resources_sect_id');
@@ -621,6 +767,7 @@ resourcesData.forEach(resource => {
     // show starting resources
     showElementID('resource_twigs');
     showElementID('resource_pebbles');
+    showElementID('resource_pine_needles');
 
     // show/hide elements individually
     // showElementID('resource_000');
@@ -651,6 +798,7 @@ resourcesData.forEach(resource => {
     // show starting resources
     showElementID('gather_div_twigs');
     showElementID('gather_div_pebbles');
+    showElementID('gather_div_pine_needles');
 
     // show/hide elements individually
     // showElementID('gather_div_twigs');
@@ -697,15 +845,15 @@ resourcesData.forEach(resource => {
 
 // Adding click event listener to both buttons
 document.getElementById(resource.gather_btn).addEventListener('click', function () {
-    handleButtonClick(resource, 'gather');
+    handleResourceClick(resource, 'gather');
 });
 
 document.getElementById(resource.con_id).addEventListener('click', function () {
-    handleButtonClick(resource, 'convert');
+    handleResourceClick(resource, 'convert');
 });
 
 // Single click event handler function
-function handleButtonClick(resource, actionType) {
+function handleResourceClick(resource, actionType) {
     switch (actionType) {
         case 'gather':
                 resource.cnt += resource.gather_rate;
@@ -749,7 +897,7 @@ function handleButtonClick(resource, actionType) {
 function interval_var_updates() {
     setInterval(function () {
         // update values
-        updateOnClick(resource);
+        updateOnInterval(resource);
     }, 1000); // Set the interval in milliseconds (1000 milliseconds = 1 second)
 }
 // Call the function to start periodic updates
@@ -758,14 +906,14 @@ interval_var_updates(); // temp for TESTING
 }); // END: RESOURCES DATA
 
 // Function to update a value from the array
-function updateOnClick(resource) {
+function updateOnInterval(resource) {
 
     // update gather rate
     document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
     // update resource counts
     resource.cnt = Math.round(resource.cnt * 10) / 10;
     if (resource.cnt >= resource.max) {
-        fetched_res_lbl = document.getElementById(resource.res_lbl);
+        let fetched_res_lbl = document.getElementById(resource.res_lbl);
         fetched_res_lbl.innerHTML = '<span class="ltbluetxt_2">' + resource.lbl + ': ' + resource.cnt + ' / ' + resource.max + '</span>';
     } else {
         document.getElementById(resource.res_lbl).innerHTML = '<span class="ltbluetxt">' + resource.lbl + ': ' + resource.cnt + ' / ' + resource.max + '</span>';
@@ -776,49 +924,9 @@ function updateOnClick(resource) {
     } else {
         document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
     }
-    /* function testing
-    // update building cnt display
-    buildingData.forEach(building => {
-        const object_costs = building.costs;
-        let fetch_cnt = '';
-        for (const [item, value] of Object.entries(object_costs)) {
-            const fetch_resource = resourcesData.find(r => r.lbl === item);
-            if (fetch_resource) {
-                const colorClass = (fetch_resource.cnt >= value) ? 'ltgreentxt' : 'ltred';
-                fetch_cnt += '<span class="' + colorClass + '">';
-                fetch_cnt += '<span id="' + building.id + '_' + item + '_cnt' + '">' + fetch_resource.cnt + '</span>&nbsp;/&nbsp;' + value + '&nbsp;' + item.toLowerCase();
-                fetch_cnt += '</span>';
-                fetch_cnt += '<br>';
-            }
-        }
-        var ResCnt = document.getElementById(building.ResCnt);
-        ResCnt.innerHTML = fetch_cnt;
-    });*/
 
-/* interval test 
-}
-
-const updateButton = document.createElement("button");
-updateButton.textContent = "Update";
-updateButton.id = "updateButton";
-
-document.body.appendChild(updateButton);
-
-// manual update event listener
-updateButton.addEventListener("click", function() {
-
-    resourcesData.forEach(resource => {
-        updateOnClick(resource);
-    });
-interval test  */
-    // *** update UPGRADE OBJECTS
-    // Reset the 'deducted' property for all resources
+    // global live updates of resource cnt
     resourcesData.forEach((resource, index) => {
-        if (resource.hasOwnProperty('deducted')) {
-            resource.deducted = false;
-        }
-    
-        // global live updates of resource cnt
         var resource_div = document.getElementById('live_cnt_' + resource.id);
             if (!resource_div) {
             resource_div = document.createElement('div');
@@ -829,172 +937,4 @@ interval test  */
         }
         resource_div.innerHTML = resource.cnt;
     });
-
-    upgradeData.forEach(upgradeObject => {
-
-        if (upgradeObject.hasOwnProperty('applied')) {
-            upgradeObject.applied = false;
-        }
-        
-        upgradeObject.print_costs = '';
-
-        // update costs dosplay
-        const object_costs = upgradeObject.costs;
-        var itemsAvailable = [];
-        
-        for (const [item, value] of Object.entries(object_costs)) {
-            const resource = resourcesData.find(r => r.lbl === item);
-            const item_display = item.toLowerCase();
-
-            if (resource) {
-                const textClass = resource.cnt >= value ? 'ltgreentxt' : 'ltred';
-                const cntToPush = Math.min(resource.cnt, value);
-                resource.cnt = Math.round(resource.cnt * 10) / 10;
-
-                let currentPrint = `<span class="${textClass}">${resource.cnt} / ${value} ${item_display}</span>`;
-                itemsAvailable.push({ cnt: cntToPush, value });
-
-                if (upgradeObject.maxed === true && value > resource.max) {
-                    currentPrint = `<span class="${textClass}">${resource.cnt} / ${value} ${item_display}***</span>`;
-                }
-        
-                upgradeObject.print_costs += currentPrint + '<br>';  // Concatenate values
-        
-                var costs_div = document.getElementById(upgradeObject.costs_div);
-                costs_div.innerHTML = upgradeObject.print_costs;
-            }
-        }
-
-        // Check if all .cnt values are greater than or equal to their corresponding value
-        var allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
-        
-        var update_add_button = document.getElementById(upgradeObject.add_button);
-        update_add_button.className = 'ltred';
-
-        
-        // Perform an action if all values are available
-        if (allValuesAvailable) {
-            // Your action here
-            var update_add_button = document.getElementById(upgradeObject.add_button);
-            update_add_button.className = 'ltgreentxt';
-
-            // update resouces after purchase
-            // Add a click event to upgradeObject.add_button
-            update_add_button.addEventListener('click', function() {
-
-                for (const item in object_costs) {
-                    const value = object_costs[item];
-            
-                    // Find the corresponding resource in current_resources_cnt
-                    const resource = resourcesData.find(r => r.lbl === item);
-            
-                    if (resource && resource.cnt >= value) {
-                        // Deduct the cost from resource.cnt
-                        purchase_upgrade(upgradeObject);
-                        // WIP: for every object every update
-                        //allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
-                    }
-
-                    itemsAvailable = [];
-                    update_add_button.className = 'ltred';
-                }
-            });
-        }
-
-    }); // end objectsData loop
-    /* interval test 
-}); // end event listener
-interval test  */
-function purchase_upgrade(costs) {
-    if (!(Array.isArray(costs))) {
-        costs = [costs];
-    }
-
-    return costs
-        .flatMap(upgradeObject => {
-            const object_costs = upgradeObject.costs;
-
-            // Check if the upgrade has already been applied
-            if (!upgradeObject.applied) {
-                // Check if all object_costs values can be deducted
-                var allValuesAvailable = Object.entries(object_costs).every(([item, value]) => {
-                    const resource = resourcesData.find(r => r.lbl === item);
-                    return resource && resource.cnt >= value && !resource.deducted;
-                });
-
-                if (allValuesAvailable) {
-                    // Deduct values, mark resources as deducted, and increase upgradeObject.cnt
-                    Object.entries(object_costs).forEach(([item, value]) => {
-                        const resource = resourcesData.find(r => r.lbl === item);
-                        if (resource) {
-                            resource.cnt -= value;
-                            resource.deducted = true;
-                         }
-                    });
-
-                    upgradeObject.cnt += 1;  // Increase cnt by 1
-                    var object_count = document.getElementById(upgradeObject.object_count_id);
-                    object_count.innerHTML = '(' + upgradeObject.cnt + ')&nbsp';
-                    
-                    // uograde gain
-                    const resource_gain = resourcesData.find(r => r.lbl === upgradeObject.lbl);
-                    resource_gain.gather_rate *= upgradeObject.gather_increase;
-                    resource_gain.gather_rate = Math.round(resource_gain.gather_rate * 10) / 10;
-                    
-                    // display current/next rate
-                    const gain_detail = document.getElementById(upgradeObject.gain_id);
-                    var next_rate = resource_gain.gather_rate;
-                    next_rate *= upgradeObject.gather_increase;
-                    next_rate = Math.round(next_rate * 10) / 10;
-                    gain_detail.className = 'light_small';
-                    gain_detail.innerHTML = ' Next: +' + next_rate + '&nbsp;' + upgradeObject.lbl.toLowerCase();
-
-                    // cost creep
-                    // Increase costs values by 40% for objects with type 'upgrade' using cost_creep
-                    const costCreep = upgradeObject.cost_creep;
-
-                    for (const key in upgradeObject.costs) {
-                        if (upgradeObject.costs.hasOwnProperty(key)) {
-                            upgradeObject.costs[key] = Math.round(upgradeObject.costs[key] * costCreep);
-                    
-                            const resource = resourcesData.find(r => r.lbl === key);
-                            const costValue = upgradeObject.costs[key];
-                    
-                            // Log the key and value of each item
-                            
-                            let currentPrint = `<span class="${resource.cnt >= costValue ? 'ltgreentxt' : 'ltred'}">${resource.cnt}/${costValue} ${key}`;
-                            
-                            // WIP: need condition if costValue is hidden
-                            if (costValue > resource.max) {
-                                // If cost exceeds the maximum, add ***
-                                currentPrint += '***';
-                                upgradeObject.maxed = true;
-                            }
-                    
-                            currentPrint += '</span>';
-                            upgradeObject.print_costs += currentPrint + '<br>';  // Concatenate values
-                            
-                        }
-                    }
-
-                    upgradeObject.applied = true;  // Mark the upgrade as applied
-                                
-                }
-            }
-        });
 }
-
-} // test end interval
-
-//var result = purchase_upgrade(objectsData);
-//console.log(result);
-
-//var cost_to_get = purchase_upgrade(objectsData);
-
-// Accessing the first element in the array
-//var firstCost = cost_to_get[0];
-
-// Accessing properties of the first cost
-//console.log(firstCost.item);      // Accessing 'item' property
-//console.log(firstCost.value);     // Accessing 'value' property
-//console.log(firstCost.resource);  // Accessing 'resource' property
