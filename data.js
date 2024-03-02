@@ -28,7 +28,7 @@ function add_resourcesData() {
         resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
         resourcesIndex.convert = 10;
         resourcesIndex.cnt = 0;
-        resourcesIndex.max = 500;
+        resourcesIndex.max = 50;
         const updates = {};
         updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
         updates.print_gather = '<span class="button_orange">[ GATHER ' + resourcesIndex.lbl.toUpperCase() + ' ]';
