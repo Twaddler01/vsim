@@ -1,4 +1,4 @@
-function add_resourcesData() {
+export function add_resourcesData() {
 
     const resourcesData = [
         { id: 'twigs', lbl: 'Twigs', level: 1, makes: 'sticks' },
@@ -42,7 +42,7 @@ function add_resourcesData() {
     return resourcesData;
 }
 
-function add_upgradeData() {
+export function add_upgradeData() {
 
     const upgradeData = [
         { id: 'twigs', costs: { 'Twigs': 20, 'Pebbles': 10 }, type: 'resource' }, 
@@ -93,7 +93,7 @@ function add_upgradeData() {
     return upgradeData;
 }
 
-function add_buildingData() {
+export function add_buildingData() {
 
     const buildingData = [
         { id: 'primitive_shelter_building', 
@@ -143,4 +143,54 @@ function add_buildingData() {
     return buildingData;
 }
 
-export { add_resourcesData, add_upgradeData, add_buildingData };
+export function add_tribeData() {
+
+    const tribeData = [
+        { id: 'total_population', lbl: 'Total Population:&nbsp;', cnt: 0, type: 'total' },
+        { id: 'available_members', lbl: '-- Available Members:&nbsp;', cnt: 0, type: 'special' },
+        { id: 'tribe_leader', lbl: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'special' },
+        { id: 'gatherer', lbl: 'Gatherers:&nbsp;', cnt: 0, type: 'job' },
+        { id: 'hunter', lbl: 'Hunters:&nbsp;', cnt: 0, type: 'job' },
+    ];
+    
+    return tribeData;
+}
+
+export function add_foodSources() {
+
+    const foodSources = [
+        { id: 'berries', lbl: 'Berries', type: 'plant', multiplier: 1.0, cnt: 0 },
+        { id: 'mushroom', lbl: 'mushroom', type: 'plant', multiplier: 1.1, cnt: 0 },
+        { id: 'wild_lettuce', lbl: 'Wild Lettuce', type: 'plant', multiplier: 0.8, cnt: 0 },
+        { id: 'squirrel', lbl: 'Squirrel', type: 'meat', multiplier: 1.3, cnt: 0 },
+        { id: 'deer', lbl: 'Deer', type: 'meat', multiplier: 1.5, cnt: 0 },
+        { id: 'sheep', lbl: 'Sheep', type: 'meat', multiplier: 1.5, cnt: 0 },
+        { id: 'wild_boar', lbl: 'Wild Boar', type: 'meat', multiplier: 2.0, cnt: 0 },
+    ];
+    
+    // added: spoil
+    for (let i = 0; i < foodSources.length; i++) {
+        const foodSourcesIndex = foodSources[i];
+        const foodSourcesUpdates = {};
+        if (foodSourcesIndex.type === 'plant') {
+            foodSourcesUpdates.spoil = -0.2;
+        }
+        if (foodSourcesIndex.type === 'meat') {
+            foodSourcesUpdates.spoil = -0.4;
+        }
+        //foodSourcesUpdates.000 = ???
+        // Assign updates to resourceslIndex properties
+        Object.assign(foodSourcesIndex, foodSourcesUpdates);
+    }
+    
+    return foodSources;
+}
+
+export function add_foodResource() {
+    const foodResource = [
+        // added live: food_dep, tick
+        { id: 'food', lbl: 'Food:&nbsp', cnt: 0, max: 500, gain: 1, food_dep: 0, tick: 0 }, 
+    ];
+    
+    return foodResource;
+}
