@@ -1,20 +1,23 @@
-import { add_resourcesData, add_upgradeData, add_buildingData } from './data.js'; // Array data
+import { 
+    add_resourcesData, 
+    add_upgradeData, 
+    add_buildingData, 
+    add_tribeData, 
+    add_foodSources, 
+    add_foodResource 
+} from './data.js'; // Array data
+
 //`
 
 // **** imported arrays ****
 
-const resourcesData = add_resourcesData(); // From data.js
-const upgradeData = add_upgradeData(); // From data.js
-const buildingData = add_buildingData(); // From data.js
-
-// TESTING
-for (let i = 0; i < upgradeData.length; i++) {
-    //print(upgradeData[i].000);
-    //print(JSON.stringify(upgradeObject.costs));
-}
-
-// static assignments
-//objectsData[1].desc = 'Become the leader of a tribe, opening up a world of possibilities!';
+// From data.js
+const resourcesData = add_resourcesData();
+const upgradeData = add_upgradeData();
+const buildingData = add_buildingData();
+const tribeData = add_tribeData();
+const foodSources = add_foodSources();
+const foodResource = add_foodResource();
 
 // goals data array
 const goals_data = [
@@ -27,11 +30,6 @@ const goals_data = [
 // goal objective
 const objectiveData = [
 { name: 'tribe_leader', type: 'init', lbl: 'tribe leader', title: 'BECOME TRIBE LEADER', cnt: 0, desc: '', gain: '+1 Tribe Leader', costs: null, job: null, consume: null , parentID: '' },
-];
-
-const tribeData = [
-    { id: 'total_population', lbl: 'Total Population', pop: 0 },
-    { id: 'tribe_leader', lbl: '-- Tribe Leader', pop: 1 },
 ];
 
 // for output testing
@@ -57,12 +55,6 @@ wait(5, function() {
   // Add your code here for the delayed execution
 }); */
 
-
-
-
-
-// first try
-// WIP: adding add_button usage
 // IN INTERVAL: update costs data
 function addObjectUpdates(objectArray, parentID) {
     // for testing ids
@@ -81,10 +73,14 @@ function addObjectUpdates(objectArray, parentID) {
 
         // for testing ids
         createdIDs.push(createdElement.id);
+        
+        let isAddButtonUpdated = false;
 
         setInterval(() => {
-        
-            var object_count = document.getElementById(object.object_count_id);
+            
+            let isAnyMaxed = false;
+            
+            let object_count = document.getElementById(object.object_count_id);
             if (object.cnt === 0) {
                 object_count.innerHTML = '';
             } else {
@@ -105,22 +101,28 @@ function addObjectUpdates(objectArray, parentID) {
                 if (fetch_resource) {
                     // flat increase of cost_creep based on new values
                     const adjustedCost = value;
-                    let fetch_resource_rnd = Math.round(fetch_resource.cnt * 10) / 10;                    const cntToPush = Math.min(fetch_resource_rnd, adjustedCost);
+                    let fetch_resource_rnd = Math.round(fetch_resource.cnt * 10) / 10;
+                    const cntToPush = Math.min(fetch_resource_rnd, adjustedCost);
                     const colorClass = (fetch_resource_rnd >= adjustedCost) ? 'ltgreentxt' : 'ltred';
                     itemsAvailable.push({ cnt: cntToPush, adjustedCost });
-                
+
                     fetch_cnt += '<span class="' + colorClass + '">';
                     fetch_cnt += '<span id="' + object.id + '_' + item + '_cnt' + '">' + fetch_resource_rnd + '</span>&nbsp;/&nbsp;' + adjustedCost + '&nbsp;' + item.toLowerCase();
 
-                    if (adjustedCost > fetch_resource.max) {
+                    let currentMax = fetch_resource.max;
+
+                    if (adjustedCost > currentMax) {
                         fetch_cnt += '***';
-                        object.maxed = true;
+                        isAnyMaxed = true;
                     }
             
                     fetch_cnt += '</span><br>';
                 }           
             }
+
+            // Update the costs,_div output
             createdElement.innerHTML = fetch_cnt;
+
             var allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
             
             // Check if the upgrade has already been applied
@@ -131,8 +133,8 @@ function addObjectUpdates(objectArray, parentID) {
                     return resource && resource.cnt >= value && !resource.deducted;
                 });
 
-                var id_format = object.id + '_add_button';
-                var update_add_button = document.getElementById(id_format);
+                let id_format = object.id + '_add_button';
+                let update_add_button = document.getElementById(id_format);
 
                 if (allValuesAvailable) {
                     // Add a 'update-button' class and a 'data-id' attribute
@@ -143,12 +145,22 @@ function addObjectUpdates(objectArray, parentID) {
 
                     // function handlePurchaseClick()
                     update_add_button.addEventListener('click', handlePurchaseClick);
-                    
                 }
                 if (!allValuesAvailable) {
-                    let update_add_button = document.getElementById(id_format);
                     update_add_button.className = 'ltred';
                 }
+            }
+
+            // update to *** if cannot purchase due to max
+            let maxedDisplayElement = document.getElementById(object.add_button + '_maxed_display');
+            
+            if (isAnyMaxed) {
+                maxedDisplayElement.className = 'ltred';
+                maxedDisplayElement.innerHTML = '&nbsp;***';
+                isAddButtonUpdated = true;
+            } else if (!isAnyMaxed && isAddButtonUpdated) {
+                maxedDisplayElement.innerHTML = '';
+                isAddButtonUpdated = false;
             }
         }, 2000);
     });
@@ -202,7 +214,7 @@ function handlePurchaseClick(event) {
             
             fetch_object.cnt += 1;
             fetch_object.applied = true;
-            
+
             // resource gain
             let resource_gain = resourcesData.find(r => r.lbl === fetch_object.lbl);
             resource_gain.gather_rate *= fetch_object.gather_increase;
@@ -229,19 +241,19 @@ function handlePurchaseClick(event) {
 
                     if (fetch_resource) {
                         const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
-                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}`;
-            
-                        if (costValue > fetch_resource.max) {
+
+                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}</span><br>`;
+
+                        let currentMax = fetch_resource.max;
+
+                        if (costValue > currentMax) {
                             fetch_cnt += '***';
-                            fetch_object.maxed = true;
                         }
-            
-                        fetch_cnt += '</span><br>';
                     }
                 }
             }
             
-            // Update the HTML output
+            // Update the costs_div output
             let update_output = document.getElementById(fetch_object.id + '_costs_div');
             update_output.innerHTML = fetch_cnt;
 
@@ -266,42 +278,23 @@ function handlePurchaseClick(event) {
             
                     if (fetch_resource) {
                         const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
-                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}`;
-            
-                        if (costValue > fetch_resource.max) {
+
+                        fetch_cnt += `<span class="${colorClass}"><span id="${fetch_object.id}_${key}_cnt">${fetch_resource.cnt}</span>&nbsp;/&nbsp;${costValue}&nbsp;${key.toLowerCase()}</span><br>`;
+
+                        let currentMax = fetch_resource.max;
+
+                        if (costValue > currentMax) {
                             fetch_cnt += '***';
-                            fetch_object.maxed = true;
                         }
-            
-                        fetch_cnt += '</span><br>';
                     }
                 }
             }
-            
-            // Update the HTML output
+
+            // Update the costs,_div output
             let update_output = document.getElementById(fetch_object.id + '_costs_div');
             update_output.innerHTML = fetch_cnt;
 
         } // end building object if
-
-/*
-        // uograde gain
-        const resource_gain = resourcesData.find(r => r.lbl === object.lbl);
-        resource_gain.gather_rate *= object.gather_increase;
-        resource_gain.gather_rate = Math.round(resource_gain.gather_rate * 10) / 10;
-                    
-        // display current/next rate
-        const gain_detail = document.getElementById(object.gain_id);
-        var next_rate = resource_gain.gather_rate;
-        next_rate *= object.gather_increase;
-        next_rate = Math.round(next_rate * 10) / 10;
-        gain_detail.className = 'light_small';
-        gain_detail.innerHTML = ' Next: +' + next_rate + '&nbsp;' + object.lbl.toLowerCase();
-*/
-
-
-
-
     }
 }
 
@@ -319,6 +312,53 @@ function hideElementID(elementId) {
         element.style.display = "none";
     }
 }
+
+function handleElements(create, parentID, element_type, childID, elementID, class_name, inner_HTML) {
+    // create: true/false
+
+    // first 4 required
+    if (create === null || parentID === null || element_type === null || childID === null) {
+        console.error("Required variables are not defined in handleElement().");
+        return;
+    }
+
+    let new_parentID;
+
+    if (create) {
+        new_parentID = document.createElement(element_type);
+        if (parentID === 'body') {
+            document.body.appendChild(new_parentID);
+        } else if (window[parentID] instanceof Node) {
+            window[parentID].appendChild(new_parentID);
+        } else {
+            console.error("Invalid parentID specified.");
+            return;
+        }
+        if (class_name) {
+            new_parentID.className = class_name;
+        }
+        if (inner_HTML) {
+            new_parentID.innerHTML = inner_HTML;
+        }
+    }
+
+    if (!create) {
+        new_parentID = document.getElementById(elementID);
+        if (class_name) {
+            new_parentID.className = class_name;
+        }
+        if (inner_HTML) {
+            new_parentID.innerHTML = inner_HTML;
+        }
+    }
+
+    if (create) {
+        parentID = new_parentID;
+    }
+}
+// USAGE:
+//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, null);
+//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, 'hello inner_HTML');
 
 // Add an event listener to the element
 function addClickEvent(elementId) {
@@ -354,6 +394,273 @@ function addClickEvent(elementId) {
     }
 }
 
+// FOOD SECTION
+function food_section(food_first_run) {
+
+    let resources_section = document.getElementById('resources_sect_id');
+    const food = foodResource[0];
+
+    if (food_first_run === true) {
+
+        // food section -- always first
+        let food_section = document.createElement('div');
+        resources_section.appendChild(food_section);
+        food_section.id = 'food_section';
+        food_section.className = 'ltbluetxt';
+
+        let food_lbl = document.createElement('span');
+        food_section.appendChild(food_lbl);
+        food_lbl.innerHTML = food.lbl;
+        
+        let food_cnt = document.createElement('span');
+        food_section.appendChild(food_cnt);
+        food_cnt.id = 'food_cnt';
+        food_cnt.innerHTML = food.cnt;
+        
+        let food_spc = document.createElement('span');
+        food_section.appendChild(food_spc);
+        food_spc.innerHTML = '&nbsp;/&nbsp;';
+        
+        let food_max = document.createElement('span');
+        food_section.appendChild(food_max);
+        food_max.id = 'food_max';
+        food_max.innerHTML = food.max;
+        
+        let food_tick = document.createElement('span');
+        food_section.appendChild(food_tick);
+        food_tick.id = 'food_tick';
+        
+        // food gathering
+        let gather_section = document.getElementById('gather_sect_id');
+        let first_resource = document.getElementById('gather_div_twigs');
+        let food_gather_div = document.createElement('div');
+        if (gather_section) {
+            if (first_resource) {
+                gather_section.insertBefore(food_gather_div, first_resource);
+            } else {
+                gather_section.appendChild(food_gather_div);
+            }
+        } else {
+            gather_section.appendChild(food_gather_div);
+        }
+        let gather_food_btn = document.createElement('span');
+        let gather_food_gain = document.createElement('span');
+        food_gather_div.appendChild(gather_food_btn);
+        food_gather_div.appendChild(gather_food_gain);
+        gather_food_btn.id = 'gather_food_btn';
+        gather_food_gain.id = 'gather_food_gain';
+        gather_food_btn.className = 'button_orange';
+        gather_food_gain.className = 'ltgreentxt';
+        gather_food_btn.innerHTML = '[ GATHER&nbsp;' + foodSources[0].lbl.toUpperCase() + ']&nbsp;';
+        food.gain = food.gain * foodSources[0].multiplier;
+        gather_food_gain.innerHTML = '+' + food.gain + '&nbsp;FOOD';
+
+        // click event
+        gather_food_btn.addEventListener('click', function() {
+            food.cnt = food.cnt + food.gain;
+            food.cnt = Math.round(food.cnt * 10) / 10;
+            food_cnt.innerHTML = food.cnt;
+        });
+        
+    food_first_run = false;
+
+    }
+
+    let total_population = tribeData.find(tribe => tribe.id === 'total_population');
+    let fetch_cnt = document.getElementById('food_cnt');
+    let food_tick = document.getElementById('food_tick');
+    let food_source = foodSources[0];
+    //let berries = foodSources.find(source => source.id === 'berries');
+
+    // interval
+    setInterval(() => {
+
+        // food consumption based on tribeData
+        let food_dep = total_population.cnt * -0.2; // using 20% loss / second
+        // assign new variables to foodResource[0]
+        foodResource[0].food_dep = food_dep;
+        foodResource[0].tick = food_dep + food_source.spoil;
+
+        if (food.cnt > 0) {
+            food.cnt += food_dep;
+            food.cnt += food_source.spoil;
+            fetch_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
+            let tick = food_dep + food_source.spoil;
+
+            if (food_tick && tick < 0 ) {
+                food_tick.className = 'ltred';
+            }
+            food_tick.innerHTML = '&nbsp;(' + tick + '&nbsp;/&nbsp;s)';
+        }
+        
+        //let add_berries = food.cnt += berries.multiplier;
+        //fetch_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
+
+    }, 1000);
+
+}
+
+// Function to add tooltips
+function addTooltip(element, tooltipContent) {
+  let tapHoldTimer;
+  let tooltipVisible = false; // Track tooltip visibility
+
+  element.addEventListener('mousedown', () => handleTapHoldStart(element, tooltipContent));
+  element.addEventListener('touchstart', () => handleTapHoldStart(element, tooltipContent));
+
+  document.addEventListener('click', handleDocumentClick); // Listen for clicks outside the tooltip
+
+  function handleTapHoldStart(element, tooltipContent) {
+    event.preventDefault();
+
+    const clickX = event.clientX || event.touches[0].clientX;
+    const clickY = event.clientY || event.touches[0].clientY;
+
+    tapHoldTimer = setTimeout(() => {
+      // Append the provided tooltip content to the body
+      document.body.appendChild(tooltipContent);
+
+      // Position the tooltip at the click location
+      const offset = 10;
+      tooltipContent.style.position = 'absolute';
+      tooltipContent.style.left = clickX + offset + 'px';
+      tooltipContent.style.top = clickY + offset + 'px';
+      tooltipContent.style.zIndex = '9999';
+      tooltipContent.style.backgroundColor = '#333333';
+      tooltipContent.style.opacity = '0.9';
+      tooltipContent.style.width = '200px';
+      tooltipContent.style.display = 'block';
+
+      tooltipVisible = true; // Tooltip is now visible
+
+      // Optionally, you can set a timeout to remove the tooltip after a certain period
+      setTimeout(() => {
+      if (document.body.contains(tooltipContent)) {
+        document.body.removeChild(tooltipContent);
+        tooltipVisible = false; // Tooltip is no longer visible
+      }
+    }, 30000); // Remove after 30 seconds (adjust as needed)
+}, 500);
+
+    document.addEventListener('mouseup', () => handleTapHoldEnd(tapHoldTimer));
+    document.addEventListener('touchend', () => handleTapHoldEnd(tapHoldTimer));
+  }
+
+  function handleDocumentClick(event) {
+    if (tooltipVisible && !element.contains(event.target) && !tooltipContent.contains(event.target)) {
+      // Clicked outside the tooltip and its associated element
+      document.body.removeChild(tooltipContent);
+      tooltipVisible = false; // Tooltip is no longer visible
+    }
+  }
+
+  function handleTapHoldEnd(tapHoldTimer) {
+    clearTimeout(tapHoldTimer);
+
+    document.removeEventListener('mouseup', handleTapHoldEnd);
+    document.removeEventListener('touchend', handleTapHoldEnd);
+  }
+}
+
+// Function to create custom tooltip content
+function createCustomTooltipContent() {
+    let border_container = document.createElement('div');
+    border_container.className = 'tooltip-style';
+
+    let tooltipContainer = document.createElement('div');
+    tooltipContainer.style.padding = '10px';
+    border_container.appendChild(tooltipContainer);
+
+    let content_title = document.createElement('p');
+    tooltipContainer.appendChild(content_title);
+    content_title.style.textAlign = 'center';
+    content_title.className = 'yellowtxt';
+    content_title.innerHTML = 'Food<hr>';
+
+    let production = document.createElement('div');
+    tooltipContainer.appendChild(production);
+    production.innerHTML = 'Production:&nbsp;';
+
+    let gatherers = document.createElement('div');
+    tooltipContainer.appendChild(gatherers);
+    gatherers.innerHTML = '...tribe leader:&nbsp0'; // WIP
+
+    let production_totals = document.createElement('div');
+    production_totals.id = 'production_totals_live';
+    tooltipContainer.appendChild(production_totals);
+    production_totals.innerHTML = 'Production Total:&nbsp;0'; // WIP
+
+    let auto_tick = document.createElement('div');
+    tooltipContainer.appendChild(auto_tick);
+    let food_tick = document.getElementById('food_tick');
+    auto_tick.innerHTML = food_tick.innerHTML;
+    
+    let consumption = document.createElement('div');
+    tooltipContainer.appendChild(consumption);
+    consumption.innerHTML = '<hr>Consumption:&nbsp;';
+
+    // array: food
+    let food = foodResource[0];
+    // array: food sources
+    let food_source = foodSources[0];
+    
+    let population = document.createElement('span');
+    tooltipContainer.appendChild(population);
+    population.innerHTML = '...population&nbsp';
+    
+    let population_cnt = document.createElement('span');
+    population_cnt.id = 'food_dep_live';
+    tooltipContainer.appendChild(population_cnt);
+    // array: population
+    let total_population = tribeData.find(tribe => tribe.id === 'total_population');
+    population_cnt.innerHTML = '(' + total_population.cnt + '):&nbsp;' + food.food_dep;
+
+    let spoiled = document.createElement('div');
+    tooltipContainer.appendChild(spoiled);
+    spoiled.innerHTML = '...spoiled food:&nbsp;';
+    spoiled.innerHTML += food_source.spoil;
+
+    let consumption_totals_live = document.createElement('div');
+    consumption_totals_live.id = 'consumption_totals_live';
+    tooltipContainer.appendChild(consumption_totals_live);
+    consumption_totals_live.innerHTML = 'Consumption Total:&nbsp;' + (food_source.spoil + food.food_dep);
+
+    let totals_live = document.createElement('div');
+    totals_live.className = 'yellowtxt';
+    totals_live.id = 'totals_live';
+    tooltipContainer.appendChild(totals_live);
+    totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + (food_source.spoil + food.food_dep); // WIP
+
+    setInterval(() => {
+        let food_dep_live = document.getElementById('food_dep_live');
+        let consumption_totals_live = document.getElementById('consumption_totals_live');
+        let totals_live = document.getElementById('totals_live');
+        total_population = tribeData.find(tribe => tribe.id === 'total_population');
+
+        if (food_dep_live) {
+            food_dep_live.innerHTML = '(' + total_population.cnt + '):&nbsp;' + food.food_dep;
+            consumption_totals_live.innerHTML = 'Consumption Total:&nbsp;' + (food_source.spoil + food.food_dep);
+            totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + (food_source.spoil + food.food_dep);
+        
+        }
+        
+        
+        
+    }, 2000);
+
+
+/*
+Production:
++ 0/s
+Consumption:
+Population (1): -0.2/s
+Spoiled: -0.2/s
+Totals:
+*/
+
+    return border_container;
+}
+
 // TRIBE SECTION
 function update_tribe(tribe_first_run) {
     
@@ -362,42 +669,84 @@ function update_tribe(tribe_first_run) {
     if (tribe_section.style.display === 'none') {
         tribe_section.style.display = 'block';
     }
+    
+    
+    let total = tribeData.find(tribe => tribe.type === 'total');
 
     // first run
     if (tribe_section && tribe_first_run === true) {
-        tribe_first_run = false;
         
-        var total_population = 0;
-
-        // Filter out items with id 'total_population'
-        var filteredTribeData = tribeData.filter(item => item.id !== 'total_population');
-
-        filteredTribeData.forEach(item => {
-            var population = document.createElement('div');
-            population.id = item.id;
-            var population_amt = item.pop;
-            total_population += item.pop;
-            var population_lbl = item.lbl;
-            population.innerHTML = `<p class="pinktxt">` + population_lbl + `: ` + population_amt + `</p>`;
-            tribe_section.appendChild(population);
+        // setup 'total'
+        let total_div = document.createElement('div');
+        tribe_section.appendChild(total_div);
+        total_div.className = 'button_orange';
+        // label + cnt
+        let total_lbl = document.createElement('span');
+        total_div.appendChild(total_lbl);
+        total_lbl.innerHTML = total.lbl;
+        let total_cnt = document.createElement('span');
+        total_div.appendChild(total_cnt);
+        total_cnt.id = total.id;
+        total_cnt.innerHTML = total.cnt;
+        
+        tribeData.forEach(tribe => {
+            if (tribe.type === 'special') { // 2
+                // setup 'special'
+                let new_div = document.createElement('div');
+                tribe_section.appendChild(new_div);
+                new_div.className = 'ltbluetxt_2';
+                
+                // label + cnt
+                let new_lbl = document.createElement('span');
+                new_div.appendChild(new_lbl);
+                new_lbl.innerHTML = tribe.lbl;
+        
+                let new_cnt = document.createElement('span');
+                new_div.appendChild(new_cnt);
+                new_cnt.innerHTML = tribe.cnt;
+                
+                // update totals
+                let fetch_total = document.getElementById(total.id);
+                total.cnt += tribe.cnt;
+                fetch_total.innerHTML = total.cnt;
+            }
+            if (tribe.type === 'job') { // 2
+                // setup 'job';
+                let new_div = document.createElement('div');
+                tribe_section.appendChild(new_div);
+                if (tribe.cnt === 0) {
+                    new_div.style.display = 'none';
+                }
+        
+                // label + cnt
+                let new_lbl = document.createElement('span');
+                new_div.appendChild(new_lbl);
+                new_lbl.innerHTML = tribe.lbl;
+        
+                let new_cnt = document.createElement('span');
+                new_div.appendChild(new_cnt);
+                new_cnt.innerHTML = tribe.cnt;
+                
+                // update totals
+                let fetch_total = document.getElementById(total.id);
+                total.cnt += tribe.cnt;
+                fetch_total.innerHTML = total.cnt;
+            }
         });
-
-        var total_lbl = document.createElement('p');
-        total_lbl.id = 'total_lbl';
-        total_lbl.className = 'ltbluetxt'; // Use className instead of class
-        total_lbl.innerHTML = 'Total Population: ' + total_population;
-
-        // Find the Tribe Leader element
-        var tribeLeader = document.getElementById('tribe_leader');
-
-        // Insert total_lbl before the Tribe Leader
-        tribe_section.insertBefore(total_lbl, tribeLeader);
+        
+        
     }
-    // next update
+    // auto updates
+    // WIP: adding gatherers and hunters
+    // gatherers by default upgraded to hunters??
+    if (tribe_section && tribe_first_run === false) {
+        
+        
+    }
 }
 
 // create new elements
-function createNewElement(newType, newId, newClass, content, parentID) {
+function createNewSection(newType, newId, newClass, content, parentID) {
     var newElement = document.createElement(newType);
     newElement.id = newId;
     newElement.style.display = "none";
@@ -496,20 +845,20 @@ function goalCompleted(goalId) {
 // WIP: eventually add functions.js with a main.js
 // *** main div sections ****
 
-createNewElement('div', 'vsim_title', null, null, 'body');
-createNewElement('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
-createNewElement('div', 'tribe_sect_id', null, '<p class="divsections">TRIBE</p>', 'body');
-createNewElement('div', 'tribe_leader_obj', null, null, 'tribe_sect_id');
-createNewElement('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
-createNewElement('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
-createNewElement('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p>', 'body');
-createNewElement('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p>', 'body');
+createNewSection('div', 'vsim_title', null, null, 'body');
+createNewSection('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
+createNewSection('div', 'tribe_sect_id', null, '<p class="divsections">TRIBE</p>', 'body');
+createNewSection('div', 'tribe_leader_obj', null, null, 'tribe_sect_id');
+createNewSection('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
+createNewSection('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
+createNewSection('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p>', 'body');
+createNewSection('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p>', 'body');
 
 // upgrade object
 // createObject('twigs_upgrade', 'tribe_sect_id');
 
-createNewElement('div', 'convert_sect_id', null, '<p class="divsections">CONVERT</p>', 'body');
-createNewElement('div', 'convert_lvl1', null, null, 'convert_sect_id');
+createNewSection('div', 'convert_sect_id', null, '<p class="divsections">CONVERT</p>', 'body');
+createNewSection('div', 'convert_lvl1', null, null, 'convert_sect_id');
 
 // **** title ****
 
@@ -523,6 +872,7 @@ vsim_title.appendChild(vsim_h1);
 showElementID('vsim_title');
 showElementID('tribe_sect_id');
 update_tribe(true);
+food_section(true);
 addClickEvent('add_active');
 createGoal(0);
 
@@ -531,6 +881,29 @@ resourcesData[0].cnt = 500;
 resourcesData[1].cnt = 500;
 resourcesData[2].cnt = 500;
 
+/*
+let click_text = document.createElement('div');
+document.body.appendChild(click_text);
+click_text.id = 'click_text';
+click_text.innerHTML = '[ CLICK ZONE ]';
+*/
+let fetch_food_div = document.getElementById('food_section');
+let tooltipContent = createCustomTooltipContent(); // Create a custom content element
+
+// Associate tooltip with click_text element
+addTooltip(fetch_food_div, tooltipContent);
+
+// testing (increae max building test)
+/*
+setInterval(() => {
+    resourcesData.forEach(fetch_resource => {
+        fetch_resource.cnt += 1000;
+        if (fetch_resource.cnt > fetch_resource.max) {
+            fetch_resource.cnt = fetch_resource.max
+        }
+    });
+}, 15000);
+*/
 
 
 // **** Setup all elements ****
@@ -595,6 +968,11 @@ buildingData.forEach(buildingObject => {
     add_button_lbl.id = buildingObject.add_button;
     add_button_lbl.innerHTML = '[ BUILD ]';
 
+    // add '***' if costs > max
+    let maxedDisplayElement = document.createElement('span');
+    first_line_div.appendChild(maxedDisplayElement);
+    maxedDisplayElement.id = buildingObject.add_button + '_maxed_display';
+
     // *** details start
     // gain label
     var gain_lbl = document.createElement('div');
@@ -630,9 +1008,6 @@ buildingData.forEach(buildingObject => {
     // Call the addObjectUpdates function with the buildingData and the ID of print_costs_lbl
     addObjectUpdates([buildingObject], print_costs_lbl.id);
 
-
-
-
 }); // *** END: BUILDING UPGRADE DATA
 
 // *** UPGRADE DATA
@@ -641,9 +1016,6 @@ var upgrade_section = document.getElementById('upgrade_sect_id');
 
 upgradeData.forEach(upgradeObject => {
 
-    // TESTING
-    //upgradeObject.cnt = 3;
-    
     // starting costs
     upgradeObject.print_costs = '';
 
@@ -701,6 +1073,11 @@ upgradeData.forEach(upgradeObject => {
     add_button_lbl.className = 'ltred';
     add_button_lbl.id = upgradeObject.add_button;
     add_button_lbl.innerHTML = '[ UPGRADE ]';
+
+    // add '***' if costs > max
+    let maxedDisplayElement = document.createElement('span');
+    first_line_div.appendChild(maxedDisplayElement);
+    maxedDisplayElement.id = upgradeObject.add_button + '_maxed_display';
 
     // *** details start
     // gain label
@@ -937,4 +1314,6 @@ function updateOnInterval(resource) {
         }
         resource_div.innerHTML = resource.cnt;
     });
+    
+    update_tribe(false);
 }
