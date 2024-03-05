@@ -1,31 +1,9 @@
-import { 
-    add_resourcesData, 
-    add_upgradeData, 
-    add_buildingData, 
-    add_tribeData, 
-    add_foodSources, 
-    add_foodResource, 
-    add_goalsData, 
-    add_objectiveData 
-} from './data.js'; // Array data
+// vsim.js
+import { resourcesData, upgradeData, buildingData, tribeData, foodSources, foodResource, goalsData, objectiveData } from './data.js';
 
 import * as functions from  './functions.js';
 
 //`
-
-// **** imported arrays ****
-
-// From data.js
-const resourcesData = add_resourcesData();
-const upgradeData = add_upgradeData();
-const buildingData = add_buildingData();
-const tribeData = add_tribeData();
-const foodSources = add_foodSources();
-const foodResource = add_foodResource();
-const goalsData = add_goalsData();
-const objectiveData = add_objectiveData();
-
-// WIP: eventually add functions.js with a main.js
 // *** main div sections ****
 
 functions.createNewSection('div', 'vsim_title', null, null, 'body');
@@ -68,15 +46,56 @@ functions.addClickEvent('add_active');
 functions.createGoal(0);
 
 // TESTING
-resourcesData[0].cnt = 500;
-resourcesData[1].cnt = 500;
-resourcesData[2].cnt = 500;
+resourcesData[0].cnt = 300;
+resourcesData[1].cnt = 300;
+resourcesData[2].cnt = 300;
 
 let fetch_food_div = document.getElementById('food_section');
 let tooltipContent = functions.createCustomTooltipContent(); // Create a custom content element
 
 // Associate tooltip with click_text element
 functions.addTooltip(fetch_food_div, tooltipContent);
+
+// Function to update a value from the array
+function updateOnInterval(resource) {
+
+    // update gather rate
+    document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
+    // update resource counts
+    resource.cnt = Math.round(resource.cnt * 10) / 10;
+    let fetched_cnt = document.getElementById(resource.res_cnt);
+    let fetched_res_container = document.getElementById(resource.res_container);
+    if (resource.cnt >= resource.max) {
+        fetched_cnt.innerHTML = resource.cnt;
+        fetched_res_container.className = 'ltbluetxt_2';
+        
+    } else {
+        fetched_res_container.className = 'ltbluetxt';
+        fetched_cnt.innerHTML = resource.cnt;
+    }
+    
+    // convert div (2)
+    if (resource.cnt >= resource.convert) {
+        document.getElementById(resource.con_id).innerHTML = '<span class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
+    } else {
+        document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
+    }
+/*
+    // global live updates of resource cnt
+    resourcesData.forEach((resource, index) => {
+        var resource_div = document.getElementById('live_cnt_' + resource.id);
+            if (!resource_div) {
+            resource_div = document.createElement('div');
+            resource_div.style.display = 'none';
+            var resource_live_cnt = 'live_cnt_' + resource.id;
+            resource_div.id = resource.resource_live_cnt;
+            document.body.appendChild(resource_div);
+        }
+        resource_div.innerHTML = resource.cnt;
+    });
+    */
+    functions.update_tribe(false);
+}
 
 // **** Setup all elements ****
 
@@ -304,19 +323,50 @@ resourcesData.forEach(resource => {
     // RESOURCES
     functions.showElementID('resources_sect_id');
     var resources_section = document.getElementById('resources_sect_id');
-
+/*
     var resourcesContainer = document.createElement('div');
     resourcesContainer.id = resource.res_lbl;
     resourcesContainer.innerHTML = resource.print_resources;
     resources_section.appendChild(resourcesContainer);
 
+// WIP split up elements for direct variable access
+updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
+
+*/
+    let resourcesContainer = document.createElement('div');
+    resourcesContainer.id = resource.res_container;
+    resources_section.appendChild(resourcesContainer);
+    // append -- resource.lbl
+    let cur_resource_lbl_1 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_1);
+    cur_resource_lbl_1.id = resource.res_cnt_lbl;
+    cur_resource_lbl_1.innerHTML = resource.lbl;
+    // append
+    let cur_resource_lbl_2 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_2);
+    cur_resource_lbl_2.innerHTML = ':&nbsp;';
+    // append -- resource.cnt
+    let cur_resource_lbl_3 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_3);
+    cur_resource_lbl_3.id = resource.res_cnt;
+    cur_resource_lbl_3.innerHTML = resource.cnt;
+    // append
+    let cur_resource_lbl_4 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_4);
+    cur_resource_lbl_4.innerHTML = '&nbsp;/&nbsp;';
+    // append -- max
+    let cur_resource_lbl_5 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_5);
+    cur_resource_lbl_5.id = resource.res_cnt_max;
+    cur_resource_lbl_5.innerHTML = resource.max;
+
     // hide all
-    functions.hideElementID(resource.res_lbl);
+    functions.hideElementID(resource.res_container);
     
     // show starting resources
-    functions.showElementID('resource_twigs');
-    functions.showElementID('resource_pebbles');
-    functions.showElementID('resource_pine_needles');
+    functions.showElementID('res_container_twigs');
+    functions.showElementID('res_container_pebbles');
+    functions.showElementID('res_container_pine_needles');
 
     // show/hide elements individually
     // showElementID('resource_000');
@@ -405,7 +455,15 @@ document.getElementById(resource.con_id).addEventListener('click', function () {
 function handleResourceClick(resource, actionType) {
     switch (actionType) {
         case 'gather':
-                resource.cnt += resource.gather_rate;
+                let update_cnt = document.getElementById(resource.res_cnt);
+// Before modifying
+console.log('Before update:', resource);
+
+// Modify the resource object
+resource.cnt += resource.gather_rate;
+
+// After modifying
+console.log('After update:', resource);                update_cnt.innerHTML = resource.cnt;
                 // set maximum
                 if (resource.cnt > resource.max) {
                     resource.cnt = resource.max;
@@ -453,39 +511,3 @@ function interval_var_updates() {
 interval_var_updates(); // temp for TESTING
 
 }); // END: RESOURCES DATA
-
-// Function to update a value from the array
-function updateOnInterval(resource) {
-
-    // update gather rate
-    document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
-    // update resource counts
-    resource.cnt = Math.round(resource.cnt * 10) / 10;
-    if (resource.cnt >= resource.max) {
-        let fetched_res_lbl = document.getElementById(resource.res_lbl);
-        fetched_res_lbl.innerHTML = '<span class="ltbluetxt_2">' + resource.lbl + ': ' + resource.cnt + ' / ' + resource.max + '</span>';
-    } else {
-        document.getElementById(resource.res_lbl).innerHTML = '<span class="ltbluetxt">' + resource.lbl + ': ' + resource.cnt + ' / ' + resource.max + '</span>';
-    }
-    // convert div (2)
-    if (resource.cnt >= resource.convert) {
-        document.getElementById(resource.con_id).innerHTML = '<span class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
-    } else {
-        document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
-    }
-
-    // global live updates of resource cnt
-    resourcesData.forEach((resource, index) => {
-        var resource_div = document.getElementById('live_cnt_' + resource.id);
-            if (!resource_div) {
-            resource_div = document.createElement('div');
-            resource_div.style.display = 'none';
-            var resource_live_cnt = 'live_cnt_' + resource.id;
-            resource_div.id = resource.resource_live_cnt;
-            document.body.appendChild(resource_div);
-        }
-        resource_div.innerHTML = resource.cnt;
-    });
-    
-    functions.update_tribe(false);
-}
