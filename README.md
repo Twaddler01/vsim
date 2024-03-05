@@ -4,6 +4,8 @@ This is going to be an incremental / simulated gather-type "village" game with a
 # Link
 https://twaddler01.github.io/vsim/vsim.html
 # Updates
+* (03-04-2024)
+Completed data.js (array variables) imports and added functions.js for function data. Worked on tooltip, design complete, but will add functionality to all resources soon, making it more dynanic.
 * (03-03-2024)
 Added tooltip and food. Working on consumption but got distracted on tooltip creation to show details of gain/loss of resources. Food will decrease with time from spoiling/consumption. Lots more work to do on it still.
 * (03-01-2024)
