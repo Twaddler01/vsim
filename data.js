@@ -1,4 +1,4 @@
-export function add_resourcesData() {
+export function init_resourcesData() {
 
     const resourcesData = [
         { id: 'twigs', lbl: 'Twigs', level: 1, makes: 'sticks' },
@@ -27,10 +27,14 @@ export function add_resourcesData() {
         resourcesIndex.con_lbl = 'convert_' + resourcesIndex.id;
         resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
         resourcesIndex.convert = 10;
-        resourcesIndex.cnt = 0;
+        resourcesIndex.cnt = 36;
         resourcesIndex.max = 500;
+        //updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
+        resourcesIndex.res_container = 'res_container_' + resourcesIndex.id;
+        resourcesIndex.res_cnt = 'res_cnt_' + resourcesIndex.id;
+        resourcesIndex.res_cnt_lbl = 'res_cnt_lbl_' + resourcesIndex.id;
+        resourcesIndex.res_cnt_max = 'res_cnt_max_' + resourcesIndex.id;
         const updates = {};
-        updates.print_resources = '<span class="ltbluetxt">' + resourcesIndex.lbl + ': ' + resourcesIndex.cnt + ' / ' + resourcesIndex.max + '</span>';
         updates.print_gather = '<span class="button_orange">[ GATHER ' + resourcesIndex.lbl.toUpperCase() + ' ]';
         updates.print_gather2 = '<span class="ltgreentxt">&nbsp;+' + resourcesIndex.gather_rate + ' ' + resourcesIndex.lbl.toUpperCase();
         updates.print_convert = '<span class="ltred">' + resourcesIndex.cnt + ' / ' + resourcesIndex.convert + ' ' + resourcesIndex.lbl + '</span>';
@@ -42,7 +46,7 @@ export function add_resourcesData() {
     return resourcesData;
 }
 
-export function add_upgradeData() {
+export function init_upgradeData() {
 
     const upgradeData = [
         { id: 'twigs', costs: { 'Twigs': 20, 'Pebbles': 10 }, type: 'resource' }, 
@@ -50,7 +54,7 @@ export function add_upgradeData() {
         { id: 'pine_needles', costs: { 'Twigs': 10, 'Pebbles': 10, 'Pine Needles': 10 }, type: 'resource' }, 
     ];
     
-    const resourcesData = add_resourcesData();
+    const resourcesData = init_resourcesData();
 
     // Iterate over the array and set other variables dynamically
     for (let i = 0; i < upgradeData.length; i++) {
@@ -93,7 +97,7 @@ export function add_upgradeData() {
     return upgradeData;
 }
 
-export function add_buildingData() {
+export function init_buildingData() {
 
     const buildingData = [
         { id: 'primitive_shelter_building', 
@@ -143,7 +147,7 @@ export function add_buildingData() {
     return buildingData;
 }
 
-export function add_tribeData() {
+export function init_tribeData() {
 
     const tribeData = [
         { id: 'available_members', lbl: '-- Available Members:&nbsp;', cnt: 0, type: 'special' },
@@ -165,7 +169,7 @@ export function add_tribeData() {
     return tribeData;
 }
 
-export function add_foodSources() {
+export function init_foodSources() {
 
     const foodSources = [
         { id: 'berries', lbl: 'Berries', type: 'plant', multiplier: 1.0, cnt: 0 },
@@ -195,7 +199,7 @@ export function add_foodSources() {
     return foodSources;
 }
 
-export function add_foodResource() {
+export function init_foodResource() {
     const foodResource = [
         // added live: food_dep, tick
         { id: 'food', lbl: 'Food:&nbsp', cnt: 0, max: 500, gain: 0, food_dep: 0, loss: 0, net_difference: 0, gather_rate: 1 }, 
@@ -204,7 +208,7 @@ export function add_foodResource() {
     return foodResource;
 }
 
-export function add_goalsData() {
+export function init_goalsData() {
 
     const goalsData = [
         { id: 0, desc: '[*] Become tribe leader.', goal_req_met: false },
@@ -217,7 +221,7 @@ export function add_goalsData() {
 
 }
 
-export function add_objectiveData() {
+export function init_objectiveData() {
 
     const objectiveData = [
     { name: 'tribe_leader', type: 'init', lbl: 'tribe leader', title: 'BECOME TRIBE LEADER', cnt: 0, desc: '', gain: '+1 Tribe Leader', costs: null, job: null, consume: null , parentID: '' },
@@ -226,3 +230,12 @@ export function add_objectiveData() {
     return objectiveData;
 
 }
+
+export const resourcesData = init_resourcesData();
+export const upgradeData = init_upgradeData();
+export const buildingData = init_buildingData();
+export const tribeData = init_tribeData();
+export const foodSources = init_foodSources();
+export const foodResource = init_foodResource();
+export const goalsData = init_goalsData();
+export const objectiveData = init_objectiveData();
