@@ -1,29 +1,7 @@
 // functions.js
 
 // import arrays
-import { 
-    add_resourcesData, 
-    add_upgradeData, 
-    add_buildingData, 
-    add_tribeData, 
-    add_foodSources, 
-    add_foodResource, 
-    add_goalsData, 
-    add_objectiveData 
-} from './data.js';
-
-// import functions
-import * as functions from  './functions.js';
-
-// declare imported arrays
-const resourcesData = add_resourcesData();
-const upgradeData = add_upgradeData();
-const buildingData = add_buildingData();
-const tribeData = add_tribeData();
-const foodSources = add_foodSources();
-const foodResource = add_foodResource();
-const goalsData = add_goalsData();
-const objectiveData = add_objectiveData();
+import { resourcesData, upgradeData, buildingData, tribeData, foodSources, foodResource, goalsData, objectiveData } from './data.js';
 
 // Function to add tooltips
 export function addTooltip(element, tooltipContent) {
@@ -109,6 +87,103 @@ wait(5, function() {
   console.log("This code executes after waiting for 5 seconds.");
   // Add your code here for the delayed execution
 }); */
+
+
+export function showElementID(elementId) {
+    var element = document.getElementById(elementId);
+    if (element) {
+        element.style.display = "block";
+    }
+}
+
+// hide element
+export function hideElementID(elementId) {
+    var element = document.getElementById(elementId);
+    if (element) {
+        element.style.display = "none";
+    }
+}
+
+export function handleElements(create, parentID, element_type, childID, elementID, class_name, inner_HTML) {
+    // create: true/false
+
+    // first 4 required
+    if (create === null || parentID === null || element_type === null || childID === null) {
+        console.error("Required variables are not defined in handleElement().");
+        return;
+    }
+
+    let new_parentID;
+
+    if (create) {
+        new_parentID = document.createElement(element_type);
+        if (parentID === 'body') {
+            document.body.appendChild(new_parentID);
+        } else if (window[parentID] instanceof Node) {
+            window[parentID].appendChild(new_parentID);
+        } else {
+            console.error("Invalid parentID specified.");
+            return;
+        }
+        if (class_name) {
+            new_parentID.className = class_name;
+        }
+        if (inner_HTML) {
+            new_parentID.innerHTML = inner_HTML;
+        }
+    }
+
+    if (!create) {
+        new_parentID = document.getElementById(elementID);
+        if (class_name) {
+            new_parentID.className = class_name;
+        }
+        if (inner_HTML) {
+            new_parentID.innerHTML = inner_HTML;
+        }
+    }
+
+    if (create) {
+        parentID = new_parentID;
+    }
+}
+// USAGE:
+//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, null);
+//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, 'hello inner_HTML');
+
+// Add an event listener to the element
+export function addClickEvent(elementId) {
+    var element = document.getElementById(elementId);
+
+    if (element) {
+        element.addEventListener('click', function() {
+            // Handle different tasks based on the element ID
+            switch (elementId) {
+                case 'add_active':
+                    // Task for 'obj_add_active'
+                    goalCompleted(0);
+                    removeElement('obj_tribe_leader_init');
+                    //hide tribe for until call
+                    hideElementID('tribe_sect_id');
+                    wait(0, function() { // 3
+                        // start
+                        update_tribe(true);
+                        // check if goal alteady completed
+                        const goalIdCheck = 1;
+                        const check_goal = goalsData.find(goal => goal.id === goalIdCheck);
+                        if (check_goal && !check_goal.goal_req_met) {
+                            createGoal(1);
+                        }
+                    });
+                    break;
+                // Add more cases for other element IDs
+                default:
+                    console.log('No specific task defined for element with ID ' + elementId);
+                    break;
+            }
+        });
+    }
+}
 
 // IN INTERVAL: update costs data
 export function addObjectUpdates(objectArray, parentID) {
@@ -355,102 +430,6 @@ export function handlePurchaseClick(event) {
             update_output.innerHTML = fetch_cnt;
 
         } // end building object if
-    }
-}
-
-export function showElementID(elementId) {
-    var element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = "block";
-    }
-}
-
-// hide element
-export function hideElementID(elementId) {
-    var element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = "none";
-    }
-}
-
-export function handleElements(create, parentID, element_type, childID, elementID, class_name, inner_HTML) {
-    // create: true/false
-
-    // first 4 required
-    if (create === null || parentID === null || element_type === null || childID === null) {
-        console.error("Required variables are not defined in handleElement().");
-        return;
-    }
-
-    let new_parentID;
-
-    if (create) {
-        new_parentID = document.createElement(element_type);
-        if (parentID === 'body') {
-            document.body.appendChild(new_parentID);
-        } else if (window[parentID] instanceof Node) {
-            window[parentID].appendChild(new_parentID);
-        } else {
-            console.error("Invalid parentID specified.");
-            return;
-        }
-        if (class_name) {
-            new_parentID.className = class_name;
-        }
-        if (inner_HTML) {
-            new_parentID.innerHTML = inner_HTML;
-        }
-    }
-
-    if (!create) {
-        new_parentID = document.getElementById(elementID);
-        if (class_name) {
-            new_parentID.className = class_name;
-        }
-        if (inner_HTML) {
-            new_parentID.innerHTML = inner_HTML;
-        }
-    }
-
-    if (create) {
-        parentID = new_parentID;
-    }
-}
-// USAGE:
-//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, null);
-//handleElements(true, 'vsim_title', 'div', 'child_div', null, null, 'hello inner_HTML');
-
-// Add an event listener to the element
-export function addClickEvent(elementId) {
-    var element = document.getElementById(elementId);
-
-    if (element) {
-        element.addEventListener('click', function() {
-            // Handle different tasks based on the element ID
-            switch (elementId) {
-                case 'add_active':
-                    // Task for 'obj_add_active'
-                    goalCompleted(0);
-                    removeElement('obj_tribe_leader_init');
-                    //hide tribe for until call
-                    hideElementID('tribe_sect_id');
-                    wait(0, function() { // 3
-                        // start
-                        update_tribe(true);
-                        // check if goal alteady completed
-                        const goalIdCheck = 1;
-                        const check_goal = goalsData.find(goal => goal.id === goalIdCheck);
-                        if (check_goal && !check_goal.goal_req_met) {
-                            createGoal(1);
-                        }
-                    });
-                    break;
-                // Add more cases for other element IDs
-                default:
-                    console.log('No specific task defined for element with ID ' + elementId);
-                    break;
-            }
-        });
     }
 }
 
