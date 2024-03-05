@@ -146,12 +146,21 @@ export function add_buildingData() {
 export function add_tribeData() {
 
     const tribeData = [
-        { id: 'total_population', lbl: 'Total Population:&nbsp;', cnt: 0, type: 'total' },
         { id: 'available_members', lbl: '-- Available Members:&nbsp;', cnt: 0, type: 'special' },
-        { id: 'tribe_leader', lbl: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'special' },
+        { id: 'tribe_leader', lbl: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'special', food_gain: 0.2, food_gain_eid: 'food_gain_eid' },
         { id: 'gatherer', lbl: 'Gatherers:&nbsp;', cnt: 0, type: 'job' },
         { id: 'hunter', lbl: 'Hunters:&nbsp;', cnt: 0, type: 'job' },
+        { id: 'total_population', lbl: 'Total Population:&nbsp;', cnt: 0, type: 'total' },
     ];
+    
+    // added: eid
+    for (let i = 0; i < tribeData.length; i++) {
+        const tribeDataIndex = tribeData[i];
+        const tribeDataUpdates = {};
+        tribeDataUpdates.eid = tribeDataIndex.id + '_eid';
+        // Assign updates to tribeData properties
+        Object.assign(tribeDataIndex, tribeDataUpdates);
+    }
     
     return tribeData;
 }
@@ -189,8 +198,31 @@ export function add_foodSources() {
 export function add_foodResource() {
     const foodResource = [
         // added live: food_dep, tick
-        { id: 'food', lbl: 'Food:&nbsp', cnt: 0, max: 500, gain: 1, food_dep: 0, tick: 0 }, 
+        { id: 'food', lbl: 'Food:&nbsp', cnt: 0, max: 500, gain: 0, food_dep: 0, loss: 0, net_difference: 0, gather_rate: 1 }, 
     ];
     
     return foodResource;
+}
+
+export function add_goalsData() {
+
+    const goalsData = [
+        { id: 0, desc: '[*] Become tribe leader.', goal_req_met: false },
+        { id: 1, desc: '[*] Gather 2000 Twigs.', goal_req_met: false },
+        { id: 2, desc: '[*] Build an altar to recruit a new tribe member.', goal_req_met: false },
+        { id: 3, desc: '[*] Convert 10 of each resource to gather new resources.', goal_req_met: false },
+    ];
+
+    return goalsData;
+
+}
+
+export function add_objectiveData() {
+
+    const objectiveData = [
+    { name: 'tribe_leader', type: 'init', lbl: 'tribe leader', title: 'BECOME TRIBE LEADER', cnt: 0, desc: '', gain: '+1 Tribe Leader', costs: null, job: null, consume: null , parentID: '' },
+    ];
+    
+    return objectiveData;
+
 }
