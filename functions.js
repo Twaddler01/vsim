@@ -1,72 +1,30 @@
 // functions.js
 
 // import arrays
-import { resourcesData, upgradeData, buildingData, tribeData, foodSources, foodResource, goalsData, objectiveData } from './data.js';
+import { resourcesData, upgradeData, buildingData, jobsData, tribeData, foodSources, foodResource, goalsData, objectiveData, costsData, objectElements } from './data.js';
 
-// Function to add tooltips
-export function addTooltip(element, tooltipContent) {
-  let tapHoldTimer;
-  let tooltipVisible = false; // Track tooltip visibility
-
-  element.addEventListener('mousedown', () => handleTapHoldStart(element, tooltipContent));
-  element.addEventListener('touchstart', () => handleTapHoldStart(element, tooltipContent));
-
-  document.addEventListener('click', handleDocumentClick); // Listen for clicks outside the tooltip
-
-  function handleTapHoldStart(element, tooltipContent) {
-    event.preventDefault();
-
-    const clickX = event.clientX || event.touches[0].clientX;
-    const clickY = event.clientY || event.touches[0].clientY;
-
-    tapHoldTimer = setTimeout(() => {
-      // Append the provided tooltip content to the body
-      document.body.appendChild(tooltipContent);
-
-      // Position the tooltip at the click location
-      const offset = 10;
-      tooltipContent.style.position = 'absolute';
-      tooltipContent.style.left = clickX + offset + 'px';
-      tooltipContent.style.top = clickY + offset + 'px';
-      tooltipContent.style.zIndex = '9999';
-      tooltipContent.style.backgroundColor = '#333333';
-      tooltipContent.style.opacity = '0.9';
-      tooltipContent.style.width = '200px';
-      tooltipContent.style.display = 'block';
-
-      tooltipVisible = true; // Tooltip is now visible
-
-      // Optionally, you can set a timeout to remove the tooltip after a certain period
-      setTimeout(() => {
-      if (document.body.contains(tooltipContent)) {
-        document.body.removeChild(tooltipContent);
-        tooltipVisible = false; // Tooltip is no longer visible
-      }
-    }, 30000); // Remove after 30 seconds (adjust as needed)
-}, 500);
-
-    document.addEventListener('mouseup', () => handleTapHoldEnd(tapHoldTimer));
-    document.addEventListener('touchend', () => handleTapHoldEnd(tapHoldTimer));
-  }
-
-  function handleDocumentClick(event) {
-    if (tooltipVisible && !element.contains(event.target) && !tooltipContent.contains(event.target)) {
-      // Clicked outside the tooltip and its associated element
-      document.body.removeChild(tooltipContent);
-      tooltipVisible = false; // Tooltip is no longer visible
+export function newEl(name, type, parentID, id, cls, content) {
+    var element = document.createElement(type);
+    parentID.appendChild(element);
+    
+    if (id) {
+        element.id = id;
     }
-  }
+    
+    if (cls) {
+        element.className = cls;
+    }
+    
+    if (content) {
+        element.innerHTML = content;
+    }
 
-  function handleTapHoldEnd(tapHoldTimer) {
-    clearTimeout(tapHoldTimer);
-
-    document.removeEventListener('mouseup', handleTapHoldEnd);
-    document.removeEventListener('touchend', handleTapHoldEnd);
-  }
+    window[name] = element;
 }
 
+
 // for output testing
-export function print(text, json) {
+export function print2(text, json) {
     let new_div = document.createElement('div');
     document.body.insertBefore(new_div, document.body.firstChild);
     if (json === 'y') {
@@ -87,7 +45,6 @@ wait(5, function() {
   console.log("This code executes after waiting for 5 seconds.");
   // Add your code here for the delayed execution
 }); */
-
 
 export function showElementID(elementId) {
     var element = document.getElementById(elementId);
@@ -185,29 +142,39 @@ export function addClickEvent(elementId) {
     }
 }
 
-// IN INTERVAL: update costs data
+// called in main interval -- update costs data
 export function addObjectUpdates(objectArray, parentID) {
-    // for testing ids
-    const createdIDs = [];
-    var itemsAvailable = [];
-    
+
     objectArray.forEach(object => {
 
-        var createdElement = document.getElementById(object.id + '_costs_div');
+        var createdElement = document.getElementById(object.costs_div);
 
         if (!createdElement) {
             createdElement = document.createElement('div');
-            createdElement.id = object.id + '_costs_div';
+            createdElement.id = object.costs_div;
             parentID.appendChild(createdElement);
         }
 
-        // for testing ids
-        createdIDs.push(createdElement.id);
-        
-        let isAddButtonUpdated = false;
+        objectUpdates_interval(objectArray, createdElement);
+    
+    });
+}
+// USAGE:
+// buildingData.forEach(buildingObject => {
+//     addObjectUpdates([buildingObject], buildingObject.costs_div);
+// });
+
+export function objectUpdates_interval(objectArray, createdElement) {
+
+    var itemsAvailable = [];
+    let isAddButtonUpdated = false;
+
+    objectArray.forEach(object => {
 
         setInterval(() => {
             
+            createdElement = document.getElementById(object.costs_div);
+
             let isAnyMaxed = false;
             
             let object_count = document.getElementById(object.object_count_id);
@@ -223,49 +190,75 @@ export function addObjectUpdates(objectArray, parentID) {
             });
             if (object.hasOwnProperty('applied')) {
                 object.applied = false;
-            }    
-            const object_costs = object.costs;
+            }
+            const object_costs = costsData.find(cost => cost.id === object.id);
             let fetch_cnt = '';
-            for (const [item, value] of Object.entries(object_costs)) {
-                const fetch_resource = resourcesData.find(r => r.lbl === item);
-                if (fetch_resource) {
-                    // flat increase of cost_creep based on new values
-                    const adjustedCost = value;
-                    let fetch_resource_rnd = Math.round(fetch_resource.cnt * 10) / 10;
-                    const cntToPush = Math.min(fetch_resource_rnd, adjustedCost);
-                    const colorClass = (fetch_resource_rnd >= adjustedCost) ? 'ltgreentxt' : 'ltred';
-                    itemsAvailable.push({ cnt: cntToPush, adjustedCost });
 
-                    fetch_cnt += '<span class="' + colorClass + '">';
-                    fetch_cnt += '<span id="' + object.id + '_' + item + '_cnt' + '">' + fetch_resource_rnd + '</span>&nbsp;/&nbsp;' + adjustedCost + '&nbsp;' + item.toLowerCase();
-
-                    let currentMax = fetch_resource.max;
-
-                    if (adjustedCost > currentMax) {
-                        fetch_cnt += '***';
-                        isAnyMaxed = true;
-                    }
+            if (object_costs) {
+                resourcesData.forEach(fetch_resource => {
+                    const costValue = object_costs.costs[fetch_resource.id];
             
-                    fetch_cnt += '</span><br>';
-                }           
+                    if (costValue !== undefined) {
+                        fetch_resource.cnt = Math.round(fetch_resource.cnt * 10) / 10;
+                        const cntToPush = Math.min(fetch_resource.cnt, costValue);
+                        const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
+                        itemsAvailable.push({ cnt: cntToPush, value: costValue });
+            
+                        fetch_cnt += `<span class="${colorClass}">${fetch_resource.cnt}&nbsp;/&nbsp;${costValue}&nbsp;${fetch_resource.lbl}</span><br>`;
+            
+                        let currentMax = fetch_resource.max;
+            
+                        if (costValue > currentMax) {
+                            fetch_cnt += '***';
+                            isAnyMaxed = true;
+                        }
+                    }
+                });
+            }
+            
+            if (object_costs && object.type === 'job') {
+                tribeData.forEach(tribe => {
+                    if (tribe.id === 'available_members') {
+                        const object_costs = costsData.find(cost => cost.id === object.id);
+                        const costValue = object_costs.costs['available_members'];
+                        const colorClass = (tribe.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
+                        const cntToPush = Math.min(tribe.cnt, costValue);
+                        itemsAvailable.push({ cnt: cntToPush, value: costValue });
+
+                        fetch_cnt += `<span class="${colorClass}">${tribe.cnt}&nbsp;/&nbsp;${costValue}&nbsp;${tribe.lbl}</span><br>`;
+                
+                    }
+                });
             }
 
             // Update the costs,_div output
-            createdElement.innerHTML = fetch_cnt;
+            if (createdElement) {
+                createdElement.innerHTML = fetch_cnt;
+            }
 
             var allValuesAvailable = itemsAvailable.every(item => item.cnt >= item.value);
             
             // Check if the upgrade has already been applied
             if (!object.applied) {
                 // Check if all object_costs values can be deducted
-                var allValuesAvailable = Object.entries(object_costs).every(([item, value]) => {
-                    const resource = resourcesData.find(r => r.lbl === item);
+                var allValuesAvailable = Object.entries(object_costs.costs).every(([item, value]) => {
+                    const resource = resourcesData.find(r => r.id === item);
                     return resource && resource.cnt >= value && !resource.deducted;
                 });
 
                 let id_format = object.id + '_add_button';
                 let update_add_button = document.getElementById(id_format);
+                
+                if (object.type === 'job') {
+                    //let fetch_tribe_available_members = tribeData.find(tribe => tribe.id === 'available_members');
+                    //let update_add_button = document.getElementById(fetch_trlibe_available_members.add_button_id);
+                    allValuesAvailable = Object.entries(object_costs.costs).every(([item, value]) => {
+                        const available_members = tribeData.find(t => t.id === item);
+                        return available_members && available_members.cnt >= value && !available_members.deducted;
+                    });
+                }
 
+                // WIP add or for available_members
                 if (allValuesAvailable) {
                     // Add a 'update-button' class and a 'data-id' attribute
                     update_add_button.className = 'ltgreentxt';
@@ -294,14 +287,7 @@ export function addObjectUpdates(objectArray, parentID) {
             }
         }, 2000);
     });
-
-    // for testing ids
-    return createdIDs;
-}
-// USAGE:
-// buildingData.forEach(buildingObject => {
-//     addObjectUpdates([buildingObject], print_costs_lbl.id);
-// });
+} // end INTERVAL function 
 
 // Outside the main function, define the click event handler
 export function handlePurchaseClick(event) {
@@ -310,14 +296,15 @@ export function handlePurchaseClick(event) {
         // *** Method has possible bug, use ForEach if required
         const id_format = event.target.getAttribute('data-id');
         const object = JSON.parse(event.target.getAttribute('data-object'));
+        const fetch_costs_data = costsData.find(c => c.id === object.id);
 
         // Reset the color of all buttons
         document.querySelectorAll('.update-button').forEach(button => {
             button.className = 'ltgreentxt'; // or set the default color class
         });
 
-        for (const [item, value] of Object.entries(object.costs)) {
-            let fetch_resource = resourcesData.find(r => r.lbl === item);
+        for (const [item, value] of Object.entries(fetch_costs_data.costs)) {
+            let fetch_resource = resourcesData.find(r => r.id === item);
             let update_add_button = document.getElementById(id_format);
 
             if (fetch_resource && fetch_resource.cnt >= value && !fetch_resource.deducted) {
@@ -326,8 +313,8 @@ export function handlePurchaseClick(event) {
             }
         }
 
-        var allValuesAvailable = Object.entries(object.costs).every(([item, value]) => {
-            const resource = resourcesData.find(r => r.lbl === item);
+        var allValuesAvailable = Object.entries(fetch_costs_data.costs).every(([item, value]) => {
+            const resource = resourcesData.find(r => r.id === item);
             return resource && resource.cnt >= value && !resource.deducted;
         });
 
@@ -360,15 +347,14 @@ export function handlePurchaseClick(event) {
             
             // cost creep (same for all objects right now)
             const costCreep = fetch_object.cost_creep;
-            const object_costs = fetch_object.costs;
+            const object_costs = fetch_costs_data.costs;
             let fetch_cnt = '';
             for (const key in object_costs) {
                 if (object_costs.hasOwnProperty(key)) {
                     object_costs[key] = Math.round(object_costs[key] * costCreep);
                     const costValue = object_costs[key];
-                    const fetch_resource = resourcesData.find(r => r.lbl === key);
+                    const fetch_resource = resourcesData.find(r => r.id === key);
                     fetch_resource.cnt = Math.round(fetch_resource.cnt * 10) / 10;                    
-
                     if (fetch_resource) {
                         const colorClass = (fetch_resource.cnt >= costValue) ? 'ltgreentxt' : 'ltred';
 
@@ -384,14 +370,14 @@ export function handlePurchaseClick(event) {
             }
             
             // Update the costs_div output
-            let update_output = document.getElementById(fetch_object.id + '_costs_div');
+            let update_output = document.getElementById(fetch_object.costs_div);
             update_output.innerHTML = fetch_cnt;
 
         } // end upgrade object if
 
         if (object.type === 'building') {
             // buildingData array only
-            let fetch_object = buildingData.find(u => u.id === object.id);
+            let fetch_object = buildingData.find(b => b.id === object.id);
             
             fetch_object.cnt += 1;
             fetch_object.applied = true;
@@ -403,7 +389,7 @@ export function handlePurchaseClick(event) {
 
             // cost creep (same for all objects right now)
             const costCreep = fetch_object.cost_creep;
-            const object_costs = fetch_object.costs;
+            const object_costs = fetch_costs_data.costs;
             let fetch_cnt = '';
             for (const key in object_costs) {
                 if (object_costs.hasOwnProperty(key)) {
@@ -426,11 +412,46 @@ export function handlePurchaseClick(event) {
             }
 
             // Update the costs,_div output
-            let update_output = document.getElementById(fetch_object.id + '_costs_div');
+            let update_output = document.getElementById(fetch_object.costs_div);
             update_output.innerHTML = fetch_cnt;
 
         } // end building object if
+        
+        if (object.type === 'job') {
+            // jobsData array only
+            let fetch_object = jobsData.find(job => job.id === object.id);
+            const object_costs = fetch_costs_data.costs;
+
+            if (object_costs && fetch_object.id === 'gatherer') {
+                let fetch_available_members = tribeData.find(tribe => tribe.id === 'available_members');
+                let fetch_tribe_cnt = tribeData.find(tribe => tribe.id === object.id);
+                
+                fetch_available_members.cnt -= 1;
+                fetch_tribe_cnt.cnt += 1;
+                fetch_object.cnt += 1;
+                start_gathering();
+            }
+            
+        } // end job object if
     }
+}
+
+// jobsData job.type start_gathering()
+export function start_gathering() {
+
+    let fetch_cnt = '';
+
+    jobsData.forEach(job => {
+        let job_position = job.id;
+        let fetch_available_members = tribeData.find(tribe => tribe.id === 'available_members');
+        const colorClass = (fetch_available_members.cnt >= 1) ? 'ltgreentxt' : 'ltred';
+        fetch_cnt += `<span class="${colorClass}"><span id="MAKE_${job_position.toUpperCase()}_cnt">${fetch_available_members.cnt}</span>&nbsp;/&nbsp;1&nbsp;${job.lbl}</span><br>`;
+            
+            
+        // Update the costs,_div output
+        let update_output = document.getElementById(job.costs_div);
+        update_output.innerHTML = fetch_cnt;
+    });
 }
 
 // TRIBE SECTION
@@ -441,89 +462,58 @@ export function update_tribe(tribe_first_run) {
     if (tribe_section.style.display === 'none') {
         tribe_section.style.display = 'block';
     }
-    
-    
+
     // first run
     if (tribe_section && tribe_first_run === true) {
 
-        // all tribeData
         tribeData.forEach(tribe => {
-            
-            // setup 'total' only
-            if (tribe.id === 'total_population') {
-                let total_div = document.createElement('div');
-                tribe_section.appendChild(total_div);
-                total_div.className = 'button_orange';
-                // label + cnt
-                let total_lbl = document.createElement('span');
-                total_div.appendChild(total_lbl);
-                total_lbl.innerHTML = tribe.lbl;
-                let total_cnt = document.createElement('span');
-                total_cnt.id = tribe.eid;
-                total_div.appendChild(total_cnt);
-                total_cnt.innerHTML = tribe.cnt;
-            }
-            // setup all but 'total'
-            if (tribe.id !== 'total_population') {
-                let new_div = document.createElement('div');
-                tribe_section.appendChild(new_div);
+            let new_div = document.createElement('div');
+            tribe_section.appendChild(new_div);
+
+            if (tribe.type === 'total') {
+                new_div.className = 'button_orange';
+            } else {
                 new_div.className = 'ltbluetxt_2';
-                    
-                // label + cnt
-                let new_lbl = document.createElement('span');
-                new_div.appendChild(new_lbl);
-                new_lbl.innerHTML = tribe.lbl;
-            
-                let new_cnt = document.createElement('span');
-                new_div.appendChild(new_cnt);
-                new_cnt.id = tribe.eid;
-                new_cnt.innerHTML = tribe.cnt;
             }
 
+            let new_lbl = document.createElement('span');
+            new_div.appendChild(new_lbl);
+            new_lbl.innerHTML = tribe.print;
+
+            let new_cnt = document.createElement('span');
+            new_div.appendChild(new_cnt);
+            new_cnt.id = tribe.eid;
+            new_cnt.innerHTML = tribe.cnt;
         });
         
-        // Accumulate cnt values for types other than 'total'
-        let totalCnt = 0;
-        tribeData.forEach(entry => {
-            if (entry.type !== 'total') {
-                totalCnt += entry.cnt;
-            }
-        });
-
-        // Update 'total_population' entry with the sum
-        tribeData.find(entry => entry.id === 'total_population').cnt += totalCnt;
-
         tribe_first_run = false;
     }
 
     // auto update interval
-    // WIP: adding gatherers and hunters
     if (tribe_section && tribe_first_run === false) {
     
         setInterval(() => {
-            tribeData.forEach(tribe => {
-                if (tribe.type !== 'total') {
-                    let fetch_tribe_eid = document.getElementById(tribe.eid);
-                    fetch_tribe_eid.innerHTML = tribe.cnt;
-                } 
-            });
-
-            // Accumulate cnt values for types other than 'total'
+            
             let totalCnt = 0;
-            tribeData.forEach(entry => {
-                if (entry.type !== 'total') {
-                    totalCnt += entry.cnt;
+   
+            tribeData.forEach(tribe => {
+                let fetch_tribe_eid = document.getElementById(tribe.eid);
+                
+                if (fetch_tribe_eid) { // Check if the element is found
+                    fetch_tribe_eid.innerHTML = tribe.cnt;
+
+                    if (tribe.type === 'job') {
+                        totalCnt += tribe.cnt;
+                    }
                 }
             });
     
-            let total_tribe = tribeData.find(tribe => tribe.eid === 'total_population_eid');
+            let total_tribe = tribeData.find(tribe => tribe.type === 'total');
             total_tribe.cnt = totalCnt;
             
-            let fetch_total_eid = document.getElementById('total_population_eid');
+            let fetch_total_eid = document.getElementById(total_tribe.eid);
             fetch_total_eid.innerHTML = total_tribe.cnt;
-//console.log('total_tribe.cnt (after)' + total_tribe.cnt);
-//console.log(total_tribe.cnt)
-    
+
         }, 2000);
     }
 }
@@ -588,10 +578,18 @@ export function food_section(food_first_run) {
         gather_food_btn.innerHTML = '[ GATHER&nbsp;' + foodSources[0].lbl.toUpperCase() + ']&nbsp;';
         food.gather_rate = food.gather_rate * foodSources[0].multiplier;
         gather_food_gain.innerHTML = '+' + food.gather_rate + '&nbsp;FOOD';
+        let food_level = document.createElement('span');
+        food_gather_div.appendChild(food_level);
+        food_level.id = 'food_level';
+        food_level.innerHTML = '&nbsp;(level 1)';
 
         // click event
         gather_food_btn.addEventListener('click', function() {
             food.cnt = food.cnt + food.gather_rate;
+            if (food.cnt >= food.max) {
+                food.cnt = food.max;
+                food_section.className = 'ltbluetxt_2';
+            }
             food_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
         });
         
@@ -616,165 +614,37 @@ export function food_section(food_first_run) {
         food.food_dep = food_dep;
         food.loss = food_dep + food_source.spoil;
         food.gain = tribe_leader.cnt * tribe_leader.food_gain; // 20% from tribe_leader
-        food.net_difference = food.loss + food.gain;
         food.net_difference = Math.round(food.net_difference * 10) / 10;
         if (food.cnt > 0) {
-            food.cnt += food.net_difference;
+            let add_plus = '+';
+            food.cnt = food.cnt + food.net_difference;
+            if (food.cnt >= food.max) {
+                food.cnt = food.max;
+            }
             fetch_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
-
+            food_loss.className = 'ltgreentxt';
             if (food.net_difference < 0 ) {
                 food_loss.className = 'ltred';
+                add_plus = '';
             }
-            food_loss.innerHTML = '&nbsp;(' + food.net_difference + '&nbsp;/&nbsp;s)';
+            if (food.cnt <= 0) {
+                food.cnt = 0;
+                fetch_cnt.innerHTML = 0;
+                food_loss.innerHTML = '';
+            } else {
+                food_loss.innerHTML = '&nbsp;(' + add_plus + food.net_difference + '&nbsp;/&nbsp;s)';
+                if (food.cnt >= food.max) {
+                    food.cnt = food.max;
+                    food_loss.innerHTML = '';
+                }
+            }
         }
-        
+
         //let add_berries = food.cnt += berries.multiplier;
         //fetch_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
 
     }, 1000);
 
-}
-
-// Function to create custom tooltip content
-export function createCustomTooltipContent() {
-
-//setTimeout(() => {
-// TEST
-//}, 5000);
-
-    // array: food
-    let food = foodResource[0];
-    // array: food sources
-    let food_source = foodSources[0];
-    let tribe_leader = tribeData.find(tribe => tribe.id === 'tribe_leader');
-    let total_population = tribeData.find(tribe => tribe.id === 'total_population');
-
-    let border_container = document.createElement('div');
-    border_container.className = 'tooltip-style';
-
-    let tooltipContainer = document.createElement('div');
-    tooltipContainer.style.padding = '10px';
-    border_container.appendChild(tooltipContainer);
-
-    let content_title = document.createElement('p');
-    tooltipContainer.appendChild(content_title);
-    content_title.style.textAlign = 'center';
-    content_title.className = 'yellowtxt';
-    content_title.innerHTML = 'Food<hr>';
-
-    let production = document.createElement('div');
-    tooltipContainer.appendChild(production);
-    production.innerHTML = 'Production:&nbsp;';
-
-    let tribe_leader_lbl = document.createElement('div');
-    tribe_leader_lbl.id = ('tribe_leader_lbl');
-    tooltipContainer.appendChild(tribe_leader_lbl);
-    tribe_leader_lbl.innerHTML = '...tribe leader:&nbsp'; // WIP
-    
-    let tribe_leader_eid = document.createElement('span');
-    tribe_leader_eid.id = tribe_leader_eid;
-    tribe_leader_eid.className = 'ltgreentxt';
-    tribe_leader_lbl.appendChild(tribe_leader_eid);
-    tribe_leader_eid.innerHTML = '+' + tribe_leader.food_gain;
-
-    let production_totals_lbl = document.createElement('div');
-    tooltipContainer.appendChild(production_totals_lbl);
-    production_totals_lbl.className = 'yellowtxt';
-    production_totals_lbl.innerHTML = 'Production Total:&nbsp;';
-    //append
-    let production_totals = document.createElement('span');
-    production_totals.id = 'production_totals_live';
-    production_totals_lbl.appendChild(production_totals);
-    production_totals.className = 'ltgreentxt';
-    let net_difference_prod = tribe_leader.food_gain; // WIP
-    production_totals.innerHTML = '+' + net_difference_prod;
-
-    let auto_tick = document.createElement('div');
-    tooltipContainer.appendChild(auto_tick);
-    let food_loss = document.getElementById('food_loss');
-    auto_tick.innerHTML = food_loss.innerHTML;
-    
-    let consumption = document.createElement('div');
-    tooltipContainer.appendChild(consumption);
-    consumption.innerHTML = '<hr>Consumption:&nbsp;';
-
-    let population = document.createElement('span');
-    tooltipContainer.appendChild(population);
-    population.innerHTML = '...population&nbsp';
-    
-    let population_cnt = document.createElement('span');
-    population.appendChild(population_cnt);
-    // array: population
-    population_cnt.innerHTML = '(' + total_population.cnt + '):&nbsp;';
-    //append
-
-    let food_dep_live = document.createElement('span');
-    population.appendChild(food_dep_live);
-    food_dep_live.id = 'food_dep_live_eid';
-    food_dep_live.className = 'ltred';
-    food_dep_live.innerHTML = foodResource[0].food_dep;
-
-    let spoiled = document.createElement('div');
-    tooltipContainer.appendChild(spoiled);
-    spoiled.innerHTML = '...spoiled food:&nbsp;';
-    //append
-    let spoiled_lbl = document.createElement('span');
-    spoiled.appendChild(spoiled_lbl);
-    spoiled_lbl.className = 'ltred';
-    spoiled_lbl.innerHTML = food_source.spoil;
-
-    let consumption_totals_live = document.createElement('div');
-    tooltipContainer.appendChild(consumption_totals_live);
-    consumption_totals_live.className = 'yellowtxt';
-    consumption_totals_live.innerHTML = 'Consumption Total:&nbsp;';
-    //append
-    let consumption_totals_lbl = document.createElement('span');
-    consumption_totals_live.appendChild(consumption_totals_lbl);
-    consumption_totals_lbl.id = 'consumption_totals_live_eid';
-    consumption_totals_lbl.className = 'ltred ';
-    // rounded consumption
-    consumption_totals_lbl.innerHTML = Math.round(foodResource[0].loss * 10) / 10;
-
-    let totals_live = document.createElement('div');
-    if (foodResource[0].loss >= 0) {
-        totals_live.className = 'ltgreentxt';
-    }
-    if (foodResource[0].loss < 0) {
-        totals_live.className = 'ltred';
-    }
-    totals_live.id = 'totals_live_eid';
-    tooltipContainer.appendChild(totals_live);
-    totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + foodResource[0].loss;
-
-    setInterval(() => {
-        
-        let fetch_food_dep_live = document.getElementById('food_dep_live_eid');
-        let fetch_consumption_totals_live = document.getElementById('consumption_totals_live_eid');
-        let fetch_totals_live = document.getElementById('totals_live_eid');
-
-        if (fetch_food_dep_live && fetch_consumption_totals_live && fetch_totals_live) {
-            
-            food_dep_live.innerHTML = foodResource[0].food_dep;
-            
-            population_cnt.innerHTML = '(' + total_population.cnt + '):&nbsp;';
-            
-            fetch_consumption_totals_live.innerHTML = Math.round(foodResource[0].loss * 10) / 10;            
-            
-            let net_difference = foodResource[0].gain + foodResource[0].loss;
-            foodResource[0].net_difference = net_difference;
-            let add_plus = '+';
-            if (foodResource[0].loss >= 0) {
-                totals_live.className = 'ltgreentxt';
-            }
-            if (foodResource[0].loss < 0) {
-                totals_live.className = 'ltred';
-                add_plus = '';
-            }
-            fetch_totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + add_plus + Math.round(foodResource[0].net_difference * 10) / 10;
-        }
-    }, 2000);
-
-    return border_container;
 }
 
 // create new elements
@@ -872,4 +742,241 @@ export function goalCompleted(goalId) {
             goal_section.appendChild(updatedGoalElement);
         }
     }
+}
+
+// Function to add tooltips
+export function addTooltip(element, tooltipContent) {
+  let tapHoldTimer;
+  let tooltipVisible = false; // Track tooltip visibility
+
+  element.addEventListener('mousedown', () => handleTapHoldStart(element, tooltipContent));
+  element.addEventListener('touchstart', () => handleTapHoldStart(element, tooltipContent));
+
+  document.addEventListener('click', handleDocumentClick); // Listen for clicks outside the tooltip
+
+  function handleTapHoldStart(element, tooltipContent) {
+    event.preventDefault();
+
+    const clickX = event.clientX || event.touches[0].clientX;
+    const clickY = event.clientY || event.touches[0].clientY;
+
+    tapHoldTimer = setTimeout(() => {
+      // Append the provided tooltip content to the body
+      document.body.appendChild(tooltipContent);
+
+      // Position the tooltip at the click location
+      const offset = 10;
+      tooltipContent.style.position = 'absolute';
+      tooltipContent.style.left = clickX + offset + 'px';
+      tooltipContent.style.top = clickY + offset + 'px';
+      tooltipContent.style.zIndex = '9999';
+      tooltipContent.style.backgroundColor = '#333333';
+      tooltipContent.style.opacity = '0.9';
+      tooltipContent.style.width = '200px';
+      tooltipContent.style.display = 'block';
+
+      tooltipVisible = true; // Tooltip is now visible
+
+      // Optionally, you can set a timeout to remove the tooltip after a certain period
+      setTimeout(() => {
+      if (document.body.contains(tooltipContent)) {
+        document.body.removeChild(tooltipContent);
+        tooltipVisible = false; // Tooltip is no longer visible
+      }
+    }, 30000); // Remove after 30 seconds (adjust as needed)
+}, 500);
+
+    document.addEventListener('mouseup', () => handleTapHoldEnd(tapHoldTimer));
+    document.addEventListener('touchend', () => handleTapHoldEnd(tapHoldTimer));
+  }
+
+  function handleDocumentClick(event) {
+    if (tooltipVisible && !element.contains(event.target) && !tooltipContent.contains(event.target)) {
+      // Clicked outside the tooltip and its associated element
+      document.body.removeChild(tooltipContent);
+      tooltipVisible = false; // Tooltip is no longer visible
+    }
+  }
+
+  function handleTapHoldEnd(tapHoldTimer) {
+    clearTimeout(tapHoldTimer);
+
+    document.removeEventListener('mouseup', handleTapHoldEnd);
+    document.removeEventListener('touchend', handleTapHoldEnd);
+  }
+}
+
+// Function to create custom tooltip content
+export function createCustomTooltipContent() {
+
+    let border_container = document.createElement('div');
+    border_container.className = 'tooltip-style';
+
+    let tooltipContainer = document.createElement('div');
+    tooltipContainer.style.padding = '10px';
+    border_container.appendChild(tooltipContainer);
+
+    let content_title = document.createElement('p');
+    tooltipContainer.appendChild(content_title);
+    content_title.style.textAlign = 'center';
+    content_title.className = 'yellowtxt';
+    content_title.innerHTML = 'Food<hr>';
+
+    let production = document.createElement('div');
+    tooltipContainer.appendChild(production);
+    production.innerHTML = 'Production:&nbsp;';
+
+    let tribe_leader_lbl = document.createElement('div');
+    tribe_leader_lbl.id = 'tribe_leader_lbl';
+    tooltipContainer.appendChild(tribe_leader_lbl);
+    tribe_leader_lbl.innerHTML = '...tribe leader:&nbsp'; // WIP
+    
+    let tribe_leader_eid = document.createElement('span');
+    tribe_leader_eid.id = 'tribe_leader_prod_cnt';
+    tribe_leader_eid.className = 'ltgreentxt';
+    tribe_leader_lbl.appendChild(tribe_leader_eid);
+
+    let gatherer_prod_div = document.createElement('div');
+    gatherer_prod_div.id = 'gatherer_prod_div';
+    tooltipContainer.appendChild(gatherer_prod_div);
+    
+    let gatherer_prod_lbl = document.createElement('span');
+    gatherer_prod_div.appendChild(gatherer_prod_lbl);
+    gatherer_prod_lbl.id = 'gatherer_prod_lbl';
+    gatherer_prod_lbl.innerHTML = '...gatherer:&nbsp;';
+
+    let gatherer_prod = document.createElement('span');
+    gatherer_prod_div.appendChild(gatherer_prod);
+    gatherer_prod.id = 'gatherer_prod';
+    gatherer_prod.className = 'ltgreentxt';
+
+    let production_totals_lbl = document.createElement('div');
+    tooltipContainer.appendChild(production_totals_lbl);
+    production_totals_lbl.className = 'yellowtxt';
+    production_totals_lbl.innerHTML = 'Production Total:&nbsp;';
+    //append
+    let production_totals = document.createElement('span');
+    production_totals.id = 'production_totals_live';
+    production_totals_lbl.appendChild(production_totals);
+    production_totals.className = 'ltgreentxt';
+
+    let auto_tick = document.createElement('div');
+    tooltipContainer.appendChild(auto_tick);
+    let food_loss = document.getElementById('food_loss');
+    auto_tick.innerHTML = food_loss.innerHTML;
+    
+    let consumption = document.createElement('div');
+    tooltipContainer.appendChild(consumption);
+    consumption.innerHTML = '<hr>Consumption:&nbsp;';
+
+    let population = document.createElement('span');
+    tooltipContainer.appendChild(population);
+    population.innerHTML = '...population&nbsp';
+    
+    let population_cnt = document.createElement('span');
+    population.appendChild(population_cnt);
+
+    let food_dep_live = document.createElement('span');
+    population.appendChild(food_dep_live);
+    food_dep_live.id = 'food_dep_live_eid';
+    food_dep_live.className = 'ltred';
+
+    let spoiled_lbl = document.createElement('div');
+    tooltipContainer.appendChild(spoiled_lbl);
+    spoiled_lbl.innerHTML = '...spoiled food:&nbsp;';
+    //append
+    let spoiled_mult = document.createElement('span');
+    spoiled_mult.id = 'spoiled_mult';
+    spoiled_lbl.appendChild(spoiled_mult);
+    //append
+    let spoiled_loss = document.createElement('span');
+    spoiled_lbl.appendChild(spoiled_loss);
+    spoiled_loss.className = 'ltred';
+    spoiled_loss.id = 'spoiled_loss';
+
+    let consumption_totals_live = document.createElement('div');
+    tooltipContainer.appendChild(consumption_totals_live);
+    consumption_totals_live.className = 'yellowtxt';
+    consumption_totals_live.innerHTML = 'Consumption Total:&nbsp;';
+    //append
+    let consumption_totals_lbl = document.createElement('span');
+    consumption_totals_live.appendChild(consumption_totals_lbl);
+    consumption_totals_lbl.id = 'consumption_totals_live_eid';
+    consumption_totals_lbl.className = 'ltred ';
+
+    let totals_live = document.createElement('div');
+    if (foodResource[0].loss >= 0) {
+        totals_live.className = 'ltgreentxt';
+    }
+    if (foodResource[0].loss < 0) {
+        totals_live.className = 'ltred';
+    }
+    totals_live.id = 'totals_live_eid';
+    tooltipContainer.appendChild(totals_live);
+
+    setInterval(() => {
+        
+        let fetch_tribe_leader_prod = document.getElementById('tribe_leader_prod_cnt');
+        let fetch_food_dep_live = document.getElementById('food_dep_live_eid');
+        let fetch_consumption_totals_live = document.getElementById('consumption_totals_live_eid');
+        let fetch_totals_live = document.getElementById('totals_live_eid');
+        let fetch_gatherer_prod = document.getElementById('gatherer_prod');
+        let gatherer_prod_lbl = document.getElementById('gatherer_prod_lbl');
+        let fetch_production_totals = document.getElementById('production_totals_live');
+        let spoiled_loss = document.getElementById('spoiled_loss');
+        let gatherer_prod_div = document.getElementById('gatherer_prod_div');
+        let spoiled_mult = document.getElementById('spoiled_mult');
+
+        // calc
+        let fetch_total_population = tribeData.find(t => t.id === 'total_population');
+        var gatherer = tribeData.find(t => t.id === 'gatherer');
+        var tribe_leader = tribeData.find(t => t.id === 'tribe_leader');
+        var tribe_leader_food = tribe_leader.cnt * tribe_leader.food_gain;
+        var gatherer_food = gatherer.cnt * gatherer.food_gain;
+        // gains
+        foodResource[0].gain = gatherer_food + tribe_leader_food;
+        // losses
+        let berries_source = foodSources.find(f => f.id === 'berries');
+        foodResource[0].spoil = berries_source.spoil;
+        // need foodSources to determine spoil rate
+        foodResource[0].loss = foodResource[0].food_dep + foodResource[0].spoil;
+        foodResource[0].net_difference = foodResource[0].gain + foodResource[0].loss;
+
+        if (fetch_food_dep_live && fetch_consumption_totals_live && fetch_totals_live) {
+            
+            if (gatherer.cnt === 0) {
+                gatherer_prod_div.style.display = 'none';
+            } else {
+                gatherer_prod_div.style.display = 'block';
+                gatherer_prod.classList.add('ltgreentxt');
+                gatherer_prod.innerHTML = '+' + gatherer_food;
+                gatherer_prod_lbl.innerHTML = '...gatherer:&nbsp;';
+            }
+
+            fetch_tribe_leader_prod.innerHTML = tribe_leader_food;
+            
+            spoiled_loss.innerHTML = foodResource[0].spoil;
+            
+            fetch_production_totals.innerHTML = '+' + foodResource[0].gain;
+
+            food_dep_live.innerHTML = foodResource[0].food_dep;
+            
+            population_cnt.innerHTML = '(' + fetch_total_population.cnt + '):&nbsp;';
+            
+            fetch_consumption_totals_live.innerHTML = Math.round(foodResource[0].loss * 10) / 10;            
+
+            
+            let add_plus = '+';
+            if (foodResource[0].net_difference >= 0) {
+                fetch_totals_live.className = 'ltgreentxt';
+            }
+            if (foodResource[0].net_difference < 0) {
+                fetch_totals_live.className = 'ltred';
+                add_plus = '';
+            }
+            fetch_totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + add_plus + Math.round(foodResource[0].net_difference * 10) / 10;
+        }
+    }, 2000);
+
+    return border_container;
 }
