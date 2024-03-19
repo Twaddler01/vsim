@@ -1,6 +1,7 @@
 export function init_resourcesData() {
 
     const resourcesData = [
+        // resource for GATHER and CONVERT
         { id: 'twigs', lbl: 'Twigs', level: 1, makes: 'sticks' },
         { id: 'pebbles', lbl: 'Pebbles', level: 1, makes: 'stones' },
         { id: 'pine_needles', lbl: 'Pine Needles', level: 1, makes: 'leaves' },
@@ -22,6 +23,9 @@ export function init_resourcesData() {
         resourcesIndex.gather_btn = 'gather_btn_' + resourcesIndex.id;
         resourcesIndex.gather_lbl = 'gather_' + resourcesIndex.id;
         resourcesIndex.gather_rate = 1;
+        // auto gathering
+        resourcesIndex.auto_lvl1_res = resourcesIndex.id + '_auto_gather';
+        resourcesIndex.auto_lvl1_rate = 0;
         // whole convert div = con_id
         resourcesIndex.con_id = 'conDiv_' + resourcesIndex.id;
         resourcesIndex.con_lbl = 'convert_' + resourcesIndex.id;
@@ -49,15 +53,15 @@ export function init_resourcesData() {
 export function init_upgradeData() {
 
     const upgradeData = [
-        { id: 'twigs', type: 'upgrade' }, 
-        { id: 'pebbles', type: 'upgrade' }, 
-        { id: 'pine_needles', type: 'upgrade' },  
-        { id: 'sticks', type: 'upgrade' }, 
-        { id: 'stones', type: 'upgrade' }, 
-        { id: 'leaves', type: 'upgrade' },  
-        { id: 'logs', type: 'upgrade' }, 
-        { id: 'rocks', type: 'upgrade' }, 
-        { id: 'brush', type: 'upgrade' }, 
+        { id: 'TWIGS_UPGRADE', lbl: 'Twigs' }, 
+        { id: 'PEBBLES_UPGRADE', lbl: 'Pebbles' }, 
+        { id: 'PINE_NEEDLES_UPGRADE', lbl: 'Pine Needles' },  
+        { id: 'STICKS_UPGRADE', lbl: 'Sticks' }, 
+        { id: 'STONES_UPGRADE', lbl: 'Stones' }, 
+        { id: 'LEAVES_UPGRADE', lbl: 'Leaves' },  
+        { id: 'LOGS_UPGRADE', lbl: 'Logs' }, 
+        { id: 'ROCKS_UPGRADE', lbl: 'Rocks' }, 
+        { id: 'BRUSH_UPGRADE', lbl: 'Brush' }, 
     ];
     
     const resourcesData = init_resourcesData();
@@ -66,40 +70,34 @@ export function init_upgradeData() {
     for (let i = 0; i < upgradeData.length; i++) {
         const upgradeIndex = upgradeData[i];
         const upgradeUpdates = {};
-        // Find the corresponding resource in resourcesData
-        const linkedResource = resourcesData.find(resource => resource.id === upgradeIndex.id);    
-        if (linkedResource) {
-            // Dynamically assign id from upgradeData
-            // upgrade_container div
-            upgradeIndex.upgradeID = linkedResource.id + '_upgrade';
-            upgradeIndex.lbl = linkedResource.lbl;
-        }
-        upgradeUpdates.first_line_div_id = upgradeIndex.id + '_first_line_div';
-        upgradeUpdates.toggled_details_div = upgradeIndex.id + '_details';
-
-        // costs
-        upgradeUpdates.costs_div = 'UPGRADE_' + upgradeIndex.id.toUpperCase() + '_costs_div';
-     
-        upgradeUpdates.object_count_id = upgradeIndex.id + '_object_count_id';
-        upgradeUpdates.gain_id = upgradeIndex.id + '_gain';
-        // [ + ] [ - ] button
-        upgradeUpdates.button = upgradeIndex.id + '_button';
-        // buy button -- UPGRADE
+        // *** dynanic ids ***
+        // static: upgradeUpdates.id
+        // static: upgradeUpdates.lbl
+        upgradeUpdates.container_id = upgradeIndex.id + '_container';
+        upgradeUpdates.first_line_div = upgradeIndex.id + '_first_line_div';
+        upgradeUpdates.details_div = upgradeIndex.id + '_details_div';
+        upgradeUpdates.toggle_button = upgradeIndex.id + '_toggle_button';
+        upgradeUpdates.object_count = upgradeIndex.id + '_object_count';
         upgradeUpdates.add_button = upgradeIndex.id + '_add_button';
-        // buy button -- ADD
-        //upgradeUpdates.add_button_ADD = '<span class="ltred" id="' + upgradeIndex.id + '_add_button' + '">[ ADD ]</span>';
+        upgradeUpdates.add_button_max = upgradeIndex.id + '_add_button_max';
+        upgradeUpdates.gain_detail_id = upgradeIndex.id + '_gain_detail_id';
+        upgradeUpdates.gain_id = upgradeIndex.id + '_gain';
+        upgradeUpdates.costs_div = upgradeIndex.id + '_costs_div';
+        // *** other data *** 
+        upgradeUpdates.gain_detail_lbl = 'gain_detail_lbl'; // Interval code
+        upgradeUpdates.gain_lbl = '+20% Gather Rate';
         upgradeUpdates.title = 'Upgrade ' + upgradeIndex.lbl + ' Collection';
+        upgradeUpdates.desc = '...Use your experiences from collecting ' + upgradeIndex.lbl.toLowerCase() + ' and other things to increase the rate of collecting ' + upgradeIndex.lbl.toLowerCase() + '.';
+        upgradeUpdates.add_button_lbl = 'UPGRADE';
         upgradeUpdates.cnt = 0;
         upgradeUpdates.gather_increase = 1.2;
         upgradeUpdates.cost_creep = 1.4;
-        upgradeUpdates.desc = '...Use your experiences from collecting ' + upgradeIndex.lbl.toLowerCase() + ' and other things to increase the rate of collecting ' + upgradeIndex.lbl.toLowerCase() + '.';
-        //upgradeUpdates.print_costs = '';
         upgradeUpdates.job = null;
         upgradeUpdates.consume = null;
         upgradeUpdates.parentID = null;
         upgradeUpdates.maxed = false;
         upgradeUpdates.type = 'upgrade';
-        // Assign updates to resourceslIndex properties
+        // Assign updates to upgradeData properties
         Object.assign(upgradeIndex, upgradeUpdates);
     }
     
@@ -110,54 +108,50 @@ export function init_buildingData() {
 
     const buildingData = [
         { id: 'primitive_shelter_building', 
-        // TEST
-        //costs: { 'Twigs': 500, 'Pebbles': 100 }, 
         title: 'Primitive Shelter',
         desc: '...A basic shelter, providing minimal protection from the elements.<br>...Provides a home for 1 tribe member.',
         gain_lbl: '+1 Tribe Member', 
         gain_detail_lbl: 'Given a job, serves as a gatherer or a hunter.'
         }, 
         { id: 'primitive_shelter_building2', 
-        // TEST
-        //costs: { 'Pebbles': 500, 'Sticks': 100 }, 
-        title: 'Primitive Shelter2',
+        title: 'Primitive Shelter2', 
         desc: '...A basic shelter, providing minimal protection from the elements.<br>...Provides a home for 1 tribe member.',
         gain_lbl: '+1 Tribe Member', 
         gain_detail_lbl: 'Given a job, serves as a gatherer or a hunter.'
         }, 
     ];
-    
+
     for (let i = 0; i < buildingData.length; i++) {
         const buildingIndex = buildingData[i];
         const buildingUpdates = {};
-        buildingUpdates.first_line_div_id = buildingIndex.id + '_first_line_div';
-        buildingUpdates.toggled_details_div = buildingIndex.id + '_details';
-        buildingUpdates.object_count_id = buildingIndex.id + '_obj_cnt_id';
-        buildingUpdates.gain_id = buildingIndex.id + '_gain';
-        buildingUpdates.gain_detail_id = buildingIndex.id + '_gain_detail';
-        buildingUpdates.button = buildingIndex.id + '_button';
+        // *** dynanic ids ***
+        // static: buildingUpdates.id
+        buildingUpdates.lbl = buildingIndex.title;
+        buildingUpdates.container_id = buildingIndex.id + '_container';
+        buildingUpdates.first_line_div = buildingIndex.id + '_first_line_div';
+        buildingUpdates.details_div = buildingIndex.id + '_details_div';
+        buildingUpdates.toggle_button = buildingIndex.id + '_toggle_button';
+        buildingUpdates.object_count = buildingIndex.id + '_object_count';
         buildingUpdates.add_button = buildingIndex.id + '_add_button';
-        // static
-        //buildingUpdates.title = '_title_';
-
-        // costs
+        buildingUpdates.add_button_max = buildingIndex.id + '_add_button_max';
+        buildingUpdates.gain_detail_id = buildingIndex.id + '_gain_detail_id';
+        buildingUpdates.gain_id = buildingIndex.id + '_gain';
         buildingUpdates.costs_div = buildingIndex.id + '_costs_div';
-        // costs parts
-        buildingUpdates.costs_cnt_span = buildingIndex.id + '_cnt_span';
-        buildingUpdates.costs_array_span = buildingIndex.id + '_costs_array';
-
+        // *** other data *** 
+        // static: buildingUpdates.gain_lbl
+        // static: buildingUpdates.gain_detail_lbl
+        // static: buildingUpdates.title
+        // static: buildingUpdates.desc 
+        buildingUpdates.add_button_lbl = 'BUILD';
+        buildingUpdates.cnt = 0;
         buildingUpdates.gather_increase = 1.2;
         buildingUpdates.cost_creep = 1.4;
-        // static
-        //buildingUpdates.desc = '_desc_';
         buildingUpdates.job = null;
         buildingUpdates.consume = null;
         buildingUpdates.parentID = null;
         buildingUpdates.maxed = false;
-        buildingUpdates.ResCnt = buildingIndex.id + '_ResCnt';
-        buildingUpdates.cnt = 0;
         buildingUpdates.type = 'building';
-        // Assign updates to resourceslIndex properties
+        // Assign updates to buildingData properties
         Object.assign(buildingIndex, buildingUpdates);
     }
     
@@ -168,48 +162,57 @@ export function init_jobsData() {
     const jobsData = [
         { id: 'gatherer', 
         lbl: 'Gatherer', 
-        title: 'JOB: Basic Gatherer',
+        title: 'JOB: Basic Fruit Gatherer',
         desc: '...Automatically gathers basic fruit to help feed your people.',
         gain_lbl: '+1 Food/s', 
         gain_detail_lbl: 'Gathers berries, wild lettuce, and mushrooms.', 
         lvl: 1 }, 
         { id: 'basic_hunter', 
         lbl: 'Basic Hunter', 
-        title: 'JOB: Basic Hunter',
+        title: '(WIP)JOB: Basic Hunter',
         desc: '...Automatically hunts basic game to help feed your people.<br>...Requires basic weapons.',
         gain_lbl: '+2 Food/s', 
         gain_detail_lbl: 'Hunts squirrel and deer.', 
         lvl: 2 }, 
         { id: 'basic_collector', 
         lbl: 'Basic Collector', 
-        title: 'JOB: Basic Collector',
+        title: '( WIP)JOB: Basic Collector',
         desc: '...Automatically gathers resources to help supply your people with (sort of) useful materials.',
-        gain_lbl: '+1 Gather/s', 
-        gain_detail_lbl: 'Gathers these basic materials: twigs, pebbles, and pine needles.', 
+        gain_lbl: '+0.5/s Twigs, Pebbles, and Pine Needles', 
+        gain_detail_lbl: 'Automatically gathers these 3 basic materials: twigs, pebbles, and pine needles.', 
         lvl: 1 }, 
     ];
     
     for (let i = 0; i < jobsData.length; i++) {
         const jobsDataIndex = jobsData[i];
         const jobsDataUpdates = {};
-        jobsDataUpdates.first_line_div_id = jobsDataIndex.id + '_line1_div_id';
-        jobsDataUpdates.toggled_details_div_id = jobsDataIndex.id + '_tog_div';
-        jobsDataUpdates.button_id = jobsDataIndex.id + '_button';
-        jobsDataUpdates.add_button_id = jobsDataIndex.id + '_add_button';
-        jobsDataUpdates.object_count_id = jobsDataIndex.id + '_obj_cnt_id';
-        jobsDataUpdates.maxed_display_id = jobsDataIndex.id + '_maxed_display';
-        jobsDataUpdates.gain_id = jobsDataIndex.id + '_gain_id';
+        // *** dynanic ids ***
+        // static: jobsDataUpdates.id
+        // static: jobsDataUpdates.lbl
+        jobsDataUpdates.container_id = jobsDataIndex.id + '_container';
+        jobsDataUpdates.first_line_div_id = jobsDataIndex.id + '_first_line_div';
+        jobsDataUpdates.details_div = jobsDataIndex.id + '_details_div';
+        jobsDataUpdates.toggle_button = jobsDataIndex.id + '_toggle_button';
+        jobsDataUpdates.object_count = jobsDataIndex.id + '_object_count';
+        jobsDataUpdates.add_button = jobsDataIndex.id + '_add_button';
+        jobsDataUpdates.add_button_max = jobsDataIndex.id + '_add_button_max';
         jobsDataUpdates.gain_detail_id = jobsDataIndex.id + '_gain_detail_id';
-        // costs
-        jobsDataUpdates.costs_div = 'JOB_' + jobsDataIndex.id.toUpperCase() + '_costs_div';
-        // costs parts
-        jobsDataUpdates.costs_cnt_span = jobsDataIndex.id + '_cnt_span';
-        jobsDataUpdates.costs_array_span = jobsDataIndex.id + '_costs_array';
-
+        jobsDataUpdates.gain_id = jobsDataIndex.id + '_gain';
+        jobsDataUpdates.costs_div = jobsDataIndex.id + '_costs_div';
+        // *** other data *** 
+        // static: jobsDataUpdates.gain_lbl
+        // static: jobsDataUpdates.gain_detail_lbl
+        // static: jobsDataUpdates.title
+        // static: jobsDataUpdates.desc
+        // static: jobsDataUpdates.lvl
         jobsDataUpdates.food_gain = jobsDataIndex.id + '_food_gain';
         jobsDataUpdates.type = 'job';
         jobsDataUpdates.cnt = 0;
-        // Assign updates to tribeData properties
+        jobsDataUpdates.add_button_lbl = 'ASSIGN';
+        jobsDataUpdates.job = null;
+        jobsDataUpdates.consume = null;
+        jobsDataUpdates.maxed = false;
+        // Assign updates to jobsData properties
         Object.assign(jobsDataIndex, jobsDataUpdates);
     }
     
@@ -219,7 +222,9 @@ export function init_jobsData() {
 export function init_tribeData() {
 
     const tribeData = [
+        // resource 'available_members' for jobsData
         { id: 'available_members', lbl: 'Available Members', print: '-- Available Members:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Available Members' },
+        
         { id: 'tribe_leader', lbl: 'Tribe Leaders', print: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'job', food_gain: 0.2, food_gain_eid: 'food_gain_eid' },
         { id: 'gatherer', lbl: 'Gatherers', print: 'Gatherers:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Gatherer', food_gain: 1, food_consume: 0.2 }, // net gain: 0.8
         { id: 'basic_hunter', lbl: 'Basic Hunters', print: 'Basic Hunters:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Hunter', },
@@ -233,7 +238,7 @@ export function init_tribeData() {
         const tribeDataUpdates = {};
         tribeDataUpdates.eid = tribeDataIndex.id + '_eid';
         tribeDataUpdates.add_button_id = tribeDataIndex.id + '_add_button';
-        tribeDataUpdates.object_count_id = tribeDataIndex.id + '_obj_cnt_id';
+        tribeDataUpdates.object_count = tribeDataIndex.id + '_obj_cnt_id';
         // Assign updates to tribeData properties
         Object.assign(tribeDataIndex, tribeDataUpdates);
     }
@@ -311,15 +316,15 @@ export function init_costsData() {
     // matches ids only
     const costsData = [
         // upgradeData
-        { id: 'twigs', costs: { 'twigs': 20, 'pebbles': 10 }, type: 'upgrade' }, 
-        { id: 'pebbles', costs: { 'twigs': 10, 'pebbles': 20 }, type: 'upgrade' }, 
-        { id: 'pine_needles', costs: { 'twigs': 10, 'pebbles': 10, 'pine_needles': 10 }, type: 'upgrade' },  
-        { id: 'sticks', costs: { 'sticks': 20, 'stones': 10 }, type: 'upgrade' }, 
-        { id: 'stones', costs: { 'sticks': 10, 'stones': 20 }, type: 'upgrade' }, 
-        { id: 'leaves', costs: { 'sticks': 10, 'stones': 10, 'leaves': 10 }, type: 'upgrade' },  
-        { id: 'logs', costs: { 'logs': 20, 'rocks': 10 }, type: 'upgrade' }, 
-        { id: 'rocks', costs: { 'rocks': 20, 'logs': 10 }, type: 'upgrade' }, 
-        { id: 'brush', costs: { 'logs': 10, 'rocks': 10, 'brush': 10 }, type: 'upgrade' }, 
+        { id: 'TWIGS_UPGRADE', costs: { 'twigs': 20, 'pebbles': 10 }, type: 'upgrade' }, 
+        { id: 'PEBBLES_UPGRADE', costs: { 'twigs': 10, 'pebbles': 20 }, type: 'upgrade' }, 
+        { id: 'PINE_NEEDLES_UPGRADE', costs: { 'twigs': 10, 'pebbles': 10, 'pine_needles': 10 }, type: 'upgrade' },  
+        { id: 'STICKS_UPGRADE', costs: { 'sticks': 20, 'stones': 10 }, type: 'upgrade' }, 
+        { id: 'STONES_UPGRADE', costs: { 'sticks': 10, 'stones': 20 }, type: 'upgrade' }, 
+        { id: 'LEAVES_UPGRADE', costs: { 'sticks': 10, 'stones': 10, 'leaves': 10 }, type: 'upgrade' },  
+        { id: 'LOGS_UPGRADE', costs: { 'logs': 20, 'rocks': 10 }, type: 'upgrade' }, 
+        { id: 'ROCKS_UPGRADE', costs: { 'rocks': 20, 'logs': 10 }, type: 'upgrade' }, 
+        { id: 'BRUSH_UPGRADE', costs: { 'logs': 10, 'rocks': 10, 'brush': 10 }, type: 'upgrade' }, 
         // buildingData
         { id: 'primitive_shelter_building', costs: { 'twigs': 500, 'pebbles': 100 }, type: 'building' }, 
         { id: 'primitive_shelter_building2', costs: { 'pebbles': 500, 'sticks': 100 }, type: 'building' }, 
@@ -332,54 +337,6 @@ export function init_costsData() {
     return costsData;
 }
 
-export function init_objectElements() {
-    
-    // NOTES
-    // .eid = created element (.id)
-    // (for first 3) .parent = objectType + ___ 
-
-    // temporary to skip errors
-    let object = [ { cnt: null, type: 'none' } ];
-    
-    const objectElements = [
-        { id: '_section', element: 'div', parentID: '_sect_id', style: null, className: null, inner: null }, 
-        { id: '_container', element: 'div', parentID: '_section', style: null, className: null, inner: null }, 
-        { id: 'first_line_div', element: 'div', parentID: '_container', style: null, className: null, inner: null }, 
-        { id: 'toggled_details_div', element: 'div', parentID: '_container', style: 'no_display', className: null, inner: null }, 
-        { id: 'button', element: 'span', parentID: 'first_line_div', style: null, className: null, inner: `<hr class="divider" width=30% align="left"><span id="${object.button}">[ + ] <span class="button_orange">${object.title}</span></span> ` }, 
-        // BUTTON ACTION HERE 'toggleButton'
-        { id: 'object_count', element: 'span', parentID: 'first_line_div', style: null, className: 'button_orange', inner: `${object.cnt} ` }, 
-        // HIDE IF = 1
-        { id: 'add_button', element: 'span', parentID: 'first_line_div', style: null, className: 'ltred', inner: `${object.type}.toUpperCase()` }, // '[ TYPE ]'
-        { id: 'add_button_maxed_display', element: 'span', parentID: 'first_line_div', style: null, className: null, inner: null }, 
-        { id: 'gain_lbl', element: 'div', parentID: 'toggled_details_div', style: null, className: 'ltgreentxt', inner: '+20% Gather Rate' }, 
-        { id: 'gain_detail', element: 'div', parentID: 'toggled_details_div', style: null, className: 'light_small', inner: `Next: +${object.gather_increase} ${object.lbl}.toLowerCase()` }, 
-        { id: 'description', element: 'div', parentID: 'toggled_details_div', style: 'maxWidth60', className: null, inner: `${object.desc}` }, 
-        { id: 'costs_lbl', element: 'div', parentID: 'toggled_details_div', style: null, className: null, inner: `<p class="yellowtxt">COSTS:</p>` }, 
-        { id: 'costs_div', element: 'div', parentID: 'toggled_details_div', style: null, className: null, inner: null }, 
-        // WIP extras
-        //{ id: 'job_div', element: 'div', parent: 'toggled_details_div', style: 'no_display', className: null, inner: `<p class="yellowtxt">CIVILIAN JOB:</p>` }, 
-        //{ id: 'consume_div', element: 'div', parent: 'toggled_details_div', style: 'no_display', className: null, inner: `<p class="yellowtxt">CONSUMES:</p>` }, 
-    ];
-
-/*
-    // assign in main file
-    let objects = 'objectName';
-
-    objectElements.forEach(element => {
-        if (element.id.startsWith('_')) {
-            element.id = objects + element.id;
-        }
-        if (element.parentID.startsWith('_')) {
-            element.parentID = objects + element.parentID;
-        }
-        console.log(element);
-    });
-*/
-
-    return objectElements;
-}
-
 export const resourcesData = init_resourcesData();
 export const upgradeData = init_upgradeData();
 export const buildingData = init_buildingData();
@@ -390,4 +347,3 @@ export const foodResource = init_foodResource();
 export const goalsData = init_goalsData();
 export const objectiveData = init_objectiveData();
 export const costsData = init_costsData();
-export const objectElements = init_objectElements();
