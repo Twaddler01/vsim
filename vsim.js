@@ -1,5 +1,5 @@
 // vsim.js
-import { resourcesData, upgradeData, buildingData, jobsData, tribeData, foodSources, foodResource, goalsData, objectiveData, costsData, objectElements } from './data.js';
+import { resourcesData, upgradeData, buildingData, jobsData, tribeData, foodSources, foodResource, goalsData, objectiveData, costsData } from './data.js';
 
 import * as functions from  './functions.js';
 
@@ -44,6 +44,7 @@ document.getElementById("exportButton").addEventListener("click", function () {
 });
 
 // *** main div sections ****
+// note: always hidden by default
 
 functions.createNewSection('div', 'vsim_title', null, null, 'body');
 functions.createNewSection('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
@@ -111,26 +112,34 @@ function start_interval(s) {
     const interval_speed = s;
 
     setInterval(() => {
-     
-        // JOB DATA
-        jobsData.forEach(job => {
-            functions.objectUpdates_interval([job], job.costs_div);
-        });
-     
-        // BUILDING DATA
-        buildingData.forEach(building => {
-            functions.objectUpdates_interval([building], building.costs_div);
-        });
-/*
+
         // UPGRADE DATA
         upgradeData.forEach(upgrade => {
             functions.objectUpdates_interval([upgrade], upgrade.costs_div);        
         });
-*/
+
+        // BUILDING DATA
+        buildingData.forEach(building => {
+            functions.objectUpdates_interval([building], building.costs_div);
+        });
+
+        // JOB DATA
+        jobsData.forEach(job => {
+            functions.objectUpdates_interval([job], job.costs_div);
+        });
+
         // RESOURCES DATA
         resourcesData.forEach(resource => {
+            // auto gatherers
+            let auto_lvl1_res = document.getElementById(resource.auto_lvl1_res);
+            auto_lvl1_res.innerHTML = `&nbsp;(+${resource.auto_lvl1_rate}&nbsp;/s)`;
+            if (resource.auto_lvl1_rate === 0) {
+                auto_lvl1_res.innerHTML = '';
+            }
+
+
+
             // update gather rate
-            // error
             document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
             // update resource counts
             resource.cnt = Math.round(resource.cnt * 10) / 10;
@@ -143,7 +152,8 @@ function start_interval(s) {
             }
             if (resource.cnt < resource.max) {
                 fetched_res_container.className = 'ltbluetxt';
-                fetched_cnt.innerHTML = resource.cnt;
+                resource.cnt += resource.auto_lvl1_rate;
+                fetched_cnt.innerHTML = resource.cnt.toFixed(1);
             }
             
             // convert div (2)
@@ -153,337 +163,17 @@ function start_interval(s) {
                 document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
             }
         });
-        
-        // JOBS DATA
-        
-
-
-
 
     }, interval_speed);
 }
 
+// *** CREATE OBJECTS BY SECTION
+functions.create_object('upgrade', upgradeData);
+functions.create_object('building', buildingData);
+functions.create_object('jobs', jobsData);
+
+// start 1 second interval
 start_interval(interval_normal);
-
-// **** Setup all elements ****
-
-// *** JOBS DATA
-functions.showElementID('jobs_sect_id');
-var jobs_section = document.getElementById('jobs_sect_id');
-
-jobsData.forEach(jobsObject => {
-
-    // container
-    functions.newEl('jobs_container', 'div', jobs_section, jobsObject.id, null, null);
-
-    // 2 parts of object
-    functions.newEl('first_line_div', 'div', jobs_container, jobsObject.first_line_div_id, null, null);
-    functions.newEl('toggled_details_div', 'div', jobs_container, jobsObject.toggled_details_div_id, null, null);
-    toggled_details_div.style.display = 'none';
-
-    // [ + ] details initial
-    functions.newEl('button_toggle', 'span', first_line_div, null, null, null);
-    button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + jobsObject.button_id + '"> [ + ] <span class="button_orange"> ' + jobsObject.title + '&nbsp;</span></span>';
-
-    var toggleButton = document.getElementById(jobsObject.button_id);
-    var toggleDiv = document.getElementById(jobsObject.toggled_details_div_id);
-
-    // Add an onclick event listener to the button
-    toggleButton.addEventListener('click', function() {
-        // Toggle the display property of toggled_details_div
-        if (toggleDiv.style.display === 'none') {
-            toggleDiv.style.display = 'block';
-
-            // Change the button text to [ - ]
-            toggleButton.innerHTML = '<span id="' + jobsObject.button_id + '"> [ - ] <span class="button_orange"> ' + jobsObject.title + '&nbsp;</span></span>';
-        } else {
-            toggleDiv.style.display = 'none';
-            // Change the button text to [ + ]
-            toggleButton.innerHTML = '<span id="' + jobsObject.button_id + '"> [ + ] <span class="button_orange"> ' + jobsObject.title + '&nbsp;</span></span>';
-        }
-    });
-
-    // object count span
-    functions.newEl('object_count', 'span', first_line_div, jobsObject.object_count_id, null, null);
-    object_count.className = 'button_orange';
-
-    functions.newEl('add_button_lbl', 'span', first_line_div, jobsObject.add_button_id, null, null);
-    add_button_lbl.className = 'ltred';
-    add_button_lbl.innerHTML = '[ ASSIGN ]';
-    // add '***' if costs > max
-    functions.newEl('maxedDisplay', 'span', first_line_div, jobsObject.maxed_display_id, null, null);
-
-    // *** details start
-    // gain label
-    functions.newEl('gain_lbl', 'div', toggled_details_div, jobsObject.gain_id, null, null);
-    gain_lbl.className = 'ltgreentxt';
-    gain_lbl.innerHTML = jobsObject.gain_lbl;
-
-    // gain_detail
-    functions.newEl('gain_detail', 'div', toggled_details_div, jobsObject.gain_detail_id, null, null);
-    gain_detail.className = 'light_small';
-    gain_detail.innerHTML = jobsObject.gain_detail_lbl;
-
-    // description
-    functions.newEl('description', 'div', toggled_details_div, null, null, null);
-    description.style.maxWidth = '60%';
-    description.innerHTML = jobsObject.desc;
-
-    // costs display (label)
-    functions.newEl('costs_lbl', 'div', toggled_details_div, null, null, null);
-    costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
-
-    // costs display (data)
-    //functions.newEl('print_costs_lbl', 'div', toggled_details_div, jobsObject.costs_div_id, null, null);
-
-    // costs display (all data)
-    functions.newEl('costs_div_all', 'div', toggled_details_div, jobsObject.costs_div, null, null);
-    // append -- costs_cnt_span_DOM
-    functions.newEl('costs_cnt_span_id', 'div', costs_div_all, jobsObject.costs_cnt_span, null, null);
-    // append -- costs_total_span
-    functions.newEl('costs_array_span_id', 'div', costs_div_all, jobsObject.costs_array_span, null, null);
-
-}); // *** END: JOBS DATA forEach
-
-// *** BUILDING DATA
-functions.showElementID('building_sect_id');
-var building_section = document.getElementById('building_sect_id');
-
-buildingData.forEach(buildingObject => {
-    
-    buildingObject.print_costs = '';
-    
-    // full container
-    var building_container = document.createElement('div');
-    building_container.id = buildingObject.id;
-    building_section.appendChild(building_container);
-
-    // define object first line
-    var first_line_div = document.createElement('div');
-    first_line_div.id = buildingObject.first_line_div_id;
-    building_container.appendChild(first_line_div);
-    // define object toggle details
-    var toggled_details_div = document.createElement('div');
-    // hide details initially
-    toggled_details_div.id = buildingObject.toggled_details_div;
-    toggled_details_div.style.display = 'none';
-    building_container.appendChild(toggled_details_div);
-
-    // [ + ] details initial
-    var button_toggle = document.createElement('span');
-    first_line_div.appendChild(button_toggle);
-    button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + buildingObject.button + '"> [ + ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
-
-    // Assuming upgradeObject.button is the ID of the button element
-    var toggleButton = document.getElementById(buildingObject.button);
-
-    // Add an onclick event listener to the button
-    toggleButton.addEventListener('click', function() {
-        // Toggle the display property of toggled_details_div
-        if (toggled_details_div.style.display === 'none') {
-            toggled_details_div.style.display = 'block';
-            // Change the button text to [ - ]
-            toggleButton.innerHTML = '<span id="' + buildingObject.button + '"> [ - ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
-        } else {
-            toggled_details_div.style.display = 'none';
-            // Change the button text to [ + ]
-            toggleButton.innerHTML = '<span id="' + buildingObject.button + '"> [ + ] <span class="button_orange"> ' + buildingObject.title + '&nbsp;</span></span>';
-        }
-    });
-    
-    // object count span
-    var object_count = document.createElement('span');
-    object_count.id = buildingObject.object_count_id;
-    object_count.className = 'button_orange';
-    first_line_div.appendChild(object_count);
-    
-    var add_button_lbl = document.createElement('span');
-    first_line_div.appendChild(add_button_lbl);
-    add_button_lbl.className = 'ltred';
-    add_button_lbl.id = buildingObject.add_button;
-    add_button_lbl.innerHTML = '[ BUILD ]';
-
-    // add '***' if costs > max
-    let maxedDisplayElement = document.createElement('span');
-    first_line_div.appendChild(maxedDisplayElement);
-    maxedDisplayElement.id = buildingObject.add_button + '_maxed_display';
-
-    // *** details start
-    // gain label
-    var gain_lbl = document.createElement('div');
-    gain_lbl.className = 'ltgreentxt';
-    // need id and content
-    gain_lbl.id = buildingObject.gain_id;
-    gain_lbl.innerHTML = buildingObject.gain_lbl;
-    toggled_details_div.appendChild(gain_lbl);
- 
-    // gain_detail
-    var gain_detail = document.createElement('div');
-    toggled_details_div.appendChild(gain_detail);
-    gain_detail.id = buildingObject.gain_detail_id;
-    gain_detail.className = 'light_small';
-    gain_detail.innerHTML = buildingObject.gain_detail_lbl;
-
-    // description
-    var description = document.createElement('div');
-    toggled_details_div.appendChild(description);
-    description.style.maxWidth = '60%';
-    description.innerHTML = buildingObject.desc;
-
-    // costs display (label)
-    var costs_lbl = document.createElement('div');
-    toggled_details_div.appendChild(costs_lbl);
-    costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
-
-    // costs display (all data)
-    var costs_div_all = document.createElement('div');
-    costs_div_all.id = buildingObject.costs_div;
-    toggled_details_div.appendChild(costs_div_all);
-    // WIP add a costs cnt element
-    // append -- costs_cnt_span_DOM
-    var costs_cnt_span = document.createElement('span');
-    costs_div_all.appendChild(costs_cnt_span);
-    costs_cnt_span.id = buildingObject.costs_cnt_span;
-    // append -- costs_total_span
-    var costs_array_span = document.createElement('span');
-    costs_array_span.id = buildingObject.costs_array_span;
-    costs_div_all.appendChild(costs_array_span);
-
-    // Call the addObjectUpdates function with the buildingData and the ID of print_costs_lbl
-    // TEST
-    //functions.addObjectUpdates([buildingObject], print_costs_lbl.id);
-
-}); // *** END: BUILDING UPGRADE DATA
-
-/*
-// ************
-// NEW ARRAY TEST
-// ************
-
-// *** UPGRADE DATA
-functions.showElementID('upgrade_sect_id');
-var upgrade_section = document.getElementById('upgrade_sect_id');
-
-upgradeData.forEach(upgradeObject => {
-
-
-
-
-
-
-
-
-    // starting costs
-    //upgradeObject.print_costs = '';
-
-    // full container
-    var upgrade_container = document.createElement('div');
-    upgrade_container.id = upgradeObject.upgradeID;
-    upgrade_section.appendChild(upgrade_container);
-
-    // define object first line
-    var first_line_div = document.createElement('div');
-    first_line_div.id = upgradeObject.first_line_div_id;
-    upgrade_container.appendChild(first_line_div);
-    // define object toggle details
-    var toggled_details_div = document.createElement('div');
-    // hide details initially
-    toggled_details_div.id = upgradeObject.toggled_details_div;
-    toggled_details_div.style.display = 'none';
-    upgrade_container.appendChild(toggled_details_div);
-    
-    // [ + ] details initial
-    var button_toggle = document.createElement('span');
-    first_line_div.appendChild(button_toggle);
-    button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + upgradeObject.button + '"> [ + ] <span class="button_orange"> ' + upgradeObject.title + '&nbsp;</span></span>';
-
-    // Assuming upgradeObject.button is the ID of the button element
-    var toggleButton = document.getElementById(upgradeObject.button);
-    
-    // Add an onclick event listener to the button
-    toggleButton.addEventListener('click', function() {
-        // Toggle the display property of toggled_details_div
-        if (toggled_details_div.style.display === 'none') {
-            toggled_details_div.style.display = 'block';
-            // Change the button text to [ - ]
-            toggleButton.innerHTML = '<span id="' + upgradeObject.button + '"> [ - ] <span class="button_orange"> ' + upgradeObject.title + '&nbsp;</span></span>';
-        } else {
-            toggled_details_div.style.display = 'none';
-            // Change the button text to [ + ]
-            toggleButton.innerHTML = '<span id="' + upgradeObject.button + '"> [ + ] <span class="button_orange"> ' + upgradeObject.title + '&nbsp;</span></span>';
-        }
-    });
-
-    // object count span
-    var object_count = document.createElement('span');
-    object_count.id = upgradeObject.object_count_id;
-    object_count.className = 'button_orange';
-    first_line_div.appendChild(object_count);
-    object_count.innerHTML = '(' + upgradeObject.cnt + ')&nbsp';
-
-    if (upgradeObject.cnt === 1) {
-        document.getElementById(object_count.id).innerHTML = ''
-    }
-    
-    var add_button_lbl = document.createElement('span');
-    first_line_div.appendChild(add_button_lbl);
-    add_button_lbl.className = 'ltred';
-    add_button_lbl.id = upgradeObject.add_button;
-    add_button_lbl.innerHTML = '[ UPGRADE ]';
-
-    // add '***' if costs > max
-    let maxedDisplayElement = document.createElement('span');
-    first_line_div.appendChild(maxedDisplayElement);
-    maxedDisplayElement.id = upgradeObject.add_button + '_maxed_display';
-
-    // *** details start
-    // gain label
-    var gain_lbl = document.createElement('div');
-    gain_lbl.className = 'ltgreentxt';
-    gain_lbl.innerHTML = '+20% Gather Rate';
-    toggled_details_div.appendChild(gain_lbl);
-
-    // gain_detail
-    var gain_detail = document.createElement('div');
-    toggled_details_div.appendChild(gain_detail);
-    gain_detail.id = upgradeObject.gain_id;
-    gain_detail.className = 'light_small';
-    gain_detail.innerHTML = ' Next: +' + upgradeObject.gather_increase + '&nbsp;' + upgradeObject.lbl.toLowerCase();
-
-    // description
-    var description = document.createElement('div');
-    toggled_details_div.appendChild(description);
-    description.style.maxWidth = '60%';
-    description.innerHTML = upgradeObject.desc;
-    
-    // costs display (label)
-    var costs_lbl = document.createElement('div');
-    toggled_details_div.appendChild(costs_lbl);
-    costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
-
-    // costs display (all data)
-    var costs_div_all = document.createElement('div');
-    costs_div_all.id = upgradeObject.costs_div;
-    toggled_details_div.appendChild(costs_div_all);
-
-// moved to interval
-    // Call the addObjectUpdates function with the upgradeData and the ID of costs_div_all
-    //functions.addObjectUpdates([upgradeObject], costs_div_all.id);
-
-    // WIP hiding
-    var job_lbl = document.createElement('div');
-    toggled_details_div.appendChild(job_lbl);
-    job_lbl.innerHTML = '<p class="yellowtxt">CIVILIAN JOB:</p>';
-    job_lbl.style.display = 'none'; // temp
-    
-    // WIP hiding
-    var consume_lbl = document.createElement('div');
-    toggled_details_div.appendChild(consume_lbl);
-    consume_lbl.innerHTML = '<p class="yellowtxt">CONSUMES:</p>';
-    consume_lbl.style.display = 'none'; // temp
-
-}); // *** END: OBJECTS UPGRADE DATA
-*/
 
 // RESOURCES DATA
 resourcesData.forEach(resource => {
@@ -518,6 +208,12 @@ resourcesData.forEach(resource => {
     resourcesContainer.appendChild(cur_resource_lbl_5);
     cur_resource_lbl_5.id = resource.res_cnt_max;
     cur_resource_lbl_5.innerHTML = resource.max;
+    
+    // WIP auto gatherers
+    let cur_resource_lbl_6 = document.createElement('span');
+    resourcesContainer.appendChild(cur_resource_lbl_6);
+    cur_resource_lbl_6.id = resource.auto_lvl1_res;
+    cur_resource_lbl_6.innerHTML = '&nbsp;(+0&nbsp;/s)';
 
     // hide all
     functions.hideElementID(resource.res_container);
@@ -623,7 +319,7 @@ function handleResourceClick(actionType) {
                 } 
                 if (resource.cnt < resource.max) {
                     resource.cnt += resource.gather_rate;
-                    update_cnt.innerHTML = Math.round(resource.cnt * 10) / 10;
+                    update_cnt.innerHTML = (Math.round(resource.cnt * 10) / 10).toFixed(1);
                 }
             break;
         case 'convert':
