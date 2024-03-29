@@ -1,13 +1,13 @@
 // vsim.js
-import { resourcesData, upgradeData, buildingData, jobsData, tribeData, foodSources, foodResource, goalsData, objectiveData, costsData } from './data.js';
+
+import { resourcesData, tribeData, foodSources, foodResource, goalsData, objectiveData, objectElements, costList } from './data.js';
 
 import * as functions from  './functions.js';
-
-var logs = [];
 
 //`
 
 // *** Override console.log for exporting into a file
+var logs = [];
 const originalConsoleLog = console.log;
 console.log = function (message) {
     if (typeof message === 'object') {
@@ -49,7 +49,7 @@ document.getElementById("exportButton").addEventListener("click", function () {
 functions.createNewSection('div', 'vsim_title', null, null, 'body');
 functions.createNewSection('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
 functions.createNewSection('div', 'tribe_sect_id', null, '<p class="divsections">TRIBE</p>', 'body');
-functions.createNewSection('div', 'tribe_leader_obj', null, null, 'tribe_sect_id');
+functions.createNewSection('div', 'TRIBE_LEADER_obj', null, null, 'tribe_sect_id');
 functions.createNewSection('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
 functions.createNewSection('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
 functions.createNewSection('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p>', 'body');
@@ -58,6 +58,8 @@ functions.createNewSection('div', 'jobs_sect_id', null, '<p class="divsections">
 functions.createNewSection('div', 'convert_sect_id', null, '<p class="divsections">CONVERT</p>', 'body');
 functions.createNewSection('div', 'convert_lvl1', null, null, 'convert_sect_id');
 functions.createNewSection('div', 'test_section', null, 'TEST', 'body');
+// let test_section = document.getElementById(test_section);
+// functions.showElementID('test_section');
 
 // **** title ****
 
@@ -84,12 +86,19 @@ functions.addClickEvent('add_active');
 functions.createGoal(0);
 
 // TESTING
+/*
 resourcesData[0].cnt = 20;
 resourcesData[1].cnt = 10;
 resourcesData[2].cnt = 5;
 //tribeData[0].cnt = 20
+*/
 
-resourcesData.forEach(res => {res.cnt = 500});
+// AVAILABLE_MEMBERS
+tribeData[0].cnt = 0;
+objectElements[14].cnt = 5;
+
+// test array
+//console.log(objectElements);
 
 // test values
 /*let set_1 = tribeData.find(i => i.id === 'gatherer');
@@ -97,9 +106,21 @@ set_1.cnt = 4;
 let set_2 = tribeData.find(i => i.id === 'basic_hunter');
 set_2.cnt = 7;*/
 
+/*
+// random food test
+// Call the selectFoodSource function to get the selected food source
+const selectedFoodSource = functions.selectFoodSource(1); // Pass the desired level as an argument
+
+// Access the id property of the selected food source
+const selectedFoodId = selectedFoodSource ? selectedFoodSource.id : null;
+
+// Print out the selected food source id
+functions.print2(selectedFoodId);
+*/
+
+// *** SETUP FOOD TOOLTIP 
 let fetch_food_div = document.getElementById('food_section');
 let tooltipContent = functions.createCustomTooltipContent(); // Create a custom content element
-
 // Associate tooltip with click_text element
 functions.addTooltip(fetch_food_div, tooltipContent);
 
@@ -113,20 +134,8 @@ function start_interval(s) {
 
     setInterval(() => {
 
-        // UPGRADE DATA
-        upgradeData.forEach(upgrade => {
-            functions.objectUpdates_interval([upgrade], upgrade.costs_div);        
-        });
-
-        // BUILDING DATA
-        buildingData.forEach(building => {
-            functions.objectUpdates_interval([building], building.costs_div);
-        });
-
-        // JOB DATA
-        jobsData.forEach(job => {
-            functions.objectUpdates_interval([job], job.costs_div);
-        });
+        // add costs and click action
+        functions.setup_costList();
 
         // RESOURCES DATA
         resourcesData.forEach(resource => {
@@ -136,11 +145,8 @@ function start_interval(s) {
             if (resource.auto_lvl1_rate === 0) {
                 auto_lvl1_res.innerHTML = '';
             }
-
-
-
             // update gather rate
-            document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + resource.gather_rate + ' ' + resource.lbl.toUpperCase();
+            document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + (Math.round(resource.gather_rate * 10) / 10) + ' ' + resource.lbl.toUpperCase();
             // update resource counts
             resource.cnt = Math.round(resource.cnt * 10) / 10;
             let fetched_cnt = document.getElementById(resource.res_cnt);
@@ -163,18 +169,20 @@ function start_interval(s) {
                 document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
             }
         });
+        
+        // FOOD
+        functions.start_food();
 
     }, interval_speed);
 }
 
 // *** CREATE OBJECTS BY SECTION
-functions.create_object('upgrade', upgradeData);
-functions.create_object('building', buildingData);
-functions.create_object('jobs', jobsData);
+functions.create_object(objectElements);
 
 // start 1 second interval
 start_interval(interval_normal);
 
+// WIP: needs its own function
 // RESOURCES DATA
 resourcesData.forEach(resource => {
 
@@ -219,9 +227,9 @@ resourcesData.forEach(resource => {
     functions.hideElementID(resource.res_container);
     
     // show starting resources
-    functions.showElementID('res_container_twigs');
-    functions.showElementID('res_container_pebbles');
-    functions.showElementID('res_container_pine_needles');
+    functions.showElementID('res_container_TWIGS');
+    functions.showElementID('res_container_PEBBLES');
+    functions.showElementID('res_container_PINE_NEEDLES');
 
     // show/hide elements individually
     // showElementID('resource_000');
@@ -250,9 +258,9 @@ resourcesData.forEach(resource => {
     functions.hideElementID(resource.gatherDiv);
 
     // show starting resources
-    functions.showElementID('gather_div_twigs');
-    functions.showElementID('gather_div_pebbles');
-    functions.showElementID('gather_div_pine_needles');
+    functions.showElementID('gather_div_TWIGS');
+    functions.showElementID('gather_div_PEBBLES');
+    functions.showElementID('gather_div_PINE_NEEDLES');
 
     // show/hide elements individually
     // showElementID('gather_div_twigs');
@@ -324,27 +332,27 @@ function handleResourceClick(actionType) {
             break;
         case 'convert':
             // available conversions
-            if (resource.id === 'twigs' && resource.cnt >= resource.convert) {
+            if (resource.id === 'TWIGS' && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'sticks').cnt += 1;
             }
-            if (resource.id === 'pebbles' && resource.cnt >= resource.convert) {
+            if (resource.id === 'PEBBLES' && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'stones').cnt += 1;
             }
-            if (resource.id === 'pine_needles' && resource.cnt >= resource.convert) {
+            if (resource.id === 'PINE_NEEDLES' && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'leaves').cnt += 1;
             }
-            if (resource.id === 'sticks' && resource.cnt >= resource.convert) {
+            if (resource.id === 'STICKS' && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'logs').cnt += 1;
             }
-            if (resource.id === 'stones' && resource.cnt >= resource.convert) {
+            if (resource.id === 'STONES'  && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'rocks').cnt += 1;
             }
-            if (resource.id === 'leaves' && resource.cnt >= resource.convert) {
+            if (resource.id === 'LEAVES' && resource.cnt >= resource.convert) {
                 resource.cnt -= resource.convert;
                 resourcesData.find(res => res.id === 'brush').cnt += 1;
             }
@@ -354,3 +362,6 @@ function handleResourceClick(actionType) {
 }
 
 }); // END: RESOURCES DATA
+
+// test
+functions.setup_costList();
