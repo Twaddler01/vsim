@@ -737,7 +737,7 @@ export function create_object(obj_data) {
 
         // [ + ] details initial -- here only
         newEl('button_toggle', 'span', first_line_div, null, null, null);
-        button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + array.toggle_button + '"> [ + ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
+        button_toggle.innerHTML = '<hr class="divider" width=100% align="left"> ' + '<span id="' + array.toggle_button + '"> [ + ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
         
         // use button element created in above span
         let toggleButton = document.getElementById(array.toggle_button);
@@ -768,6 +768,13 @@ export function create_object(obj_data) {
         newEl('add_button_lbl', 'span', first_line_div, array.add_button, 'ltred', null);
         add_button_lbl.innerHTML = `[ ${array.add_button_lbl} ]`;
 
+// JOB REMOVE BUTTON
+
+        if (array.obj_type === 'job') {
+            newEl('remove_button_lbl', 'span', first_line_div, array.remove_button, 'button_faded', null);
+            remove_button_lbl.innerHTML = `[ ${array.remove_button_lbl} ]`;
+        }
+
         // craft progress
         newEl('progress_lbl', 'span', first_line_div, array.progress_lbl, 'ltred', null);
 
@@ -797,119 +804,31 @@ export function create_object(obj_data) {
         description.style.maxWidth = '60%';
         description.innerHTML = array.desc;
 
-        // WIP hiding -- needs ID
+        // WIP hiding
         newEl('job_lbl', 'div', details_div, null, null, null);
         job_lbl.innerHTML = '<p class="yellowtxt">CIVILIAN JOB:</p>';
         job_lbl.style.display = 'none'; // temp
 
-        // WIP hiding -- needs ID
-        newEl('consume_lbl', 'div', details_div, null, null, null);
+        // WIP hiding
+        newEl('consume_lbl', 'div', details_div, array.consume_lbl, null, null);
         consume_lbl.innerHTML = '<p class="yellowtxt">CONSUMES:</p>';
         consume_lbl.style.display = 'none'; // temp
 
-        // costs display (label)
-        newEl('costs_lbl', 'div', details_div, null, null, null);
-        costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
+// DECAY
 
-        // costs display (all data)
-        newEl('costs_div_all', 'div', details_div, array.costs_div, null, null);
-
-        // start in interval
-        //functions.objectUpdates_interval([array], array.costs_div);
-
-    }); // END: arrayData
-} // END: function
-
-// WIP: for gathering only from vsim4.js
-export function create_gather(obj_data) {
-
-    const object_name = obj_name;
-    const arrayData = obj_data;
-
-    // [obj_name]_section
-    const section_name = object_name + '_section';
-    
-    // create new section
-    createNewSection('div', section_name, null, `<p class="divsections">${object_name.toUpperCase()}</p>`, 'body');
-    showElementID(section_name);
-    let fetch_section = document.getElementById(section_name);
-
-    // create dynamic elements
-    arrayData.forEach(array => {
-
-        // container
-        newEl('container_id', 'div', fetch_section, array.container_id, null, null);
-        
-        // define object first line
-        newEl('first_line_div', 'div', container_id, array.first_line_div, null, null);
-        // define object details
-        newEl('details_div', 'div', container_id, array.details_div, null, null);
-        // hide details initially
-        details_div.style.display = 'none';
-
-        // [ + ] details initial -- here only
-        newEl('button_toggle', 'span', first_line_div, null, null, null);
-        button_toggle.innerHTML = '<hr class="divider" width=30% align="left"> ' + '<span id="' + array.toggle_button + '"> [ + ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
-        
-        // use button element created in above span
-        let toggleButton = document.getElementById(array.toggle_button);
-
-        // Add an onclick event listener to the button (closure method)
-        toggleButton.addEventListener('click', (function(details) {
-            return function() {
-                // Toggle the display property of the captured 'details_div'
-                if (details.style.display === 'none') {
-                    details.style.display = 'block';
-                    toggleButton.innerHTML = '<span id="' + array.toggle_button + '"> [ - ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
-                } else {
-                    details.style.display = 'none';
-                    toggleButton.innerHTML = '<span id="' + array.toggle_button + '"> [ + ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
-                }
-            };
-        })(details_div)); // Pass the current 'details_div' to the closure
-
-        // object count span
-        newEl('object_count', 'span', first_line_div, array.object_count, 'button_orange', null);
-        object_count.innerHTML = `(${array.cnt})&nbsp`;
-
-        if (array.cnt === 0) {
-            object_count.innerHTML = '';
+        if (array.id === 'CRAFT_SPEAR') {
+            newEl('decay_container', 'div', details_div, array.decay_container, null, null);
+            // append
+            newEl('decay_lbl', 'div', decay_container, array.decay_lbl, null, null);
+            decay_lbl.innerHTML = '<p class="yellowtxt">DURABILITY:</p>';
+            // append
+            newEl('decay_value_lbl', 'span', decay_container, array.decay_value_lbl, null, null);
+            decay_value_lbl.className = 'ltgreentxt';
+            decay_value_lbl.innerHTML = array.decay_value + ` (${array.decay_timer} remaining) `;
+            // hide initially
+            hideElementID(array.decay_container);
         }
 
-        // [ BUY_BUTTON ]
-        newEl('add_button_lbl', 'span', first_line_div, array.add_button, 'ltred', null);
-        add_button_lbl.innerHTML = `[ ${array.add_button_lbl} ]&nbsp;`;
-
-        // craft progress
-        newEl('progress_lbl', 'span', first_line_div, array.progress_lbl, 'ltred', null);
-
-        // add '***' if costs > max
-        newEl('maxedDisplayElement', 'span', first_line_div, array.add_button_max, null, null);
-
-        // *** details start
-        // gain label
-        newEl('gain_lbl', 'div', details_div, array.gain_lbl, 'ltgreentxt', null);
-        gain_lbl.innerHTML = array.gain_lbl;
-
-        // gain_detail
-        newEl('gain_detail', 'div', details_div, array.gain_detail_id, 'light_small', null);
-        gain_detail.innerHTML = array.gain_detail_lbl;
-
-        // description
-        newEl('description', 'div', details_div, null, null, null);
-        description.style.maxWidth = '60%';
-        description.innerHTML = array.desc;
-
-        // WIP hiding -- needs ID
-        newEl('job_lbl', 'div', details_div, null, null, null);
-        job_lbl.innerHTML = '<p class="yellowtxt">CIVILIAN JOB:</p>';
-        job_lbl.style.display = 'none'; // temp
-
-        // WIP hiding -- needs ID
-        newEl('consume_lbl', 'div', details_div, null, null, null);
-        consume_lbl.innerHTML = '<p class="yellowtxt">CONSUMES:</p>';
-        consume_lbl.style.display = 'none'; // temp
-
         // costs display (label)
         newEl('costs_lbl', 'div', details_div, null, null, null);
         costs_lbl.innerHTML = '<p class="yellowtxt">COSTS:</p>';
@@ -922,6 +841,157 @@ export function create_gather(obj_data) {
 
     }); // END: arrayData
 } // END: function
+
+export function start_gather(obj_data) {
+    
+    const arrayData = obj_data;
+    
+    arrayData.forEach(array => {
+
+        let resources_section = document.getElementById('resources_sect_id');
+        let gather_section = document.getElementById('gather_sect_id');
+        let convert_section = document.getElementById('convert_sect_id');
+    
+        newEl('res_container', 'div', resources_section, array.res_container, null, null);
+     
+        // attach to res_container
+        newEl('cur_resource_lbl_1', 'span', res_container, array.res_cnt_lbl, null, null);
+        cur_resource_lbl_1.innerHTML = array.lbl;
+        // append
+        newEl('cur_resource_lbl_2', 'span', res_container, null, null, null);
+        cur_resource_lbl_2.innerHTML = ':&nbsp;';
+        // append -- resource.cnt
+        newEl('cur_resource_lbl_3', 'span', res_container, array.res_cnt, null, null);
+        cur_resource_lbl_3.innerHTML = array.cnt;
+        newEl('cur_resource_lbl_4', 'span', res_container, null, null, null);
+        // append
+        cur_resource_lbl_4.innerHTML = '&nbsp;/&nbsp;';
+        // append -- max
+        newEl('cur_resource_lbl_5', 'span', res_container, array.res_cnt_max, null, null);
+        cur_resource_lbl_5.innerHTML = array.max;
+        // WIP auto gatherers
+        newEl('cur_resource_lbl_6', 'span', res_container, array.auto_lvl1_res, null, null);
+        cur_resource_lbl_6.innerHTML = '&nbsp;(+0&nbsp;/s)';
+    
+        // hide all
+        hideElementID(array.res_container);
+        
+        // show starting resources
+        showElementID('res_container_TWIGS');
+        showElementID('res_container_PEBBLES');
+        showElementID('res_container_PINE_NEEDLES');
+    
+        // show/hide elements individually
+        // showElementID('resource_000');
+    
+// GATHER
+    
+        newEl('gath_container', 'div', gather_section, array.gatherDiv, null, null);
+        // append
+        newEl('gatherSpan1', 'span', gath_container, array.gather_btn, null, null);
+        gatherSpan1.innerHTML = array.print_gather;
+        // append
+        newEl('gatherSpan2', 'span', gath_container, array.gather_lbl, null, null);
+        gatherSpan2.innerHTML = array.print_gather2;
+    
+        // hide all
+        hideElementID(array.gatherDiv);
+    
+        // show starting resources
+        showElementID('gather_div_TWIGS');
+        showElementID('gather_div_PEBBLES');
+        showElementID('gather_div_PINE_NEEDLES');
+    
+        // show/hide elements individually
+        // showElementID('gather_div_twigs');
+
+// CONVERT
+    
+        newEl('conv_container', 'div', convert_section, array.con_id, null, null);
+        // append
+        newEl('convertSpan1', 'span', conv_container, array.con_lbl, null, null);
+        convertSpan1.innerHTML = array.print_convert;
+        newEl('convertSpan2', 'span', conv_container, array.con_btn, null, null);
+        convertSpan2.innerHTML = array.print_convert2;
+    
+        // always hide these non-convertibles
+        hideElementID('conDiv_logs');
+        hideElementID('conDiv_rocks');
+        hideElementID('conDiv_brush');
+    
+        // show starting resources
+        // showElementID('conDiv_000');
+    
+        // show/hide elements individually
+        // showElementID('conDiv_000');
+    
+        // hide all
+        // hideElementID(resource.con_lbl);
+    
+        // if hidden
+        //showElementID('resource_twigs');
+        //showElementID('gather_div_twigs');
+
+// CLICKS
+
+        // Adding click event listener to both buttons
+        document.getElementById(array.gather_btn).addEventListener('click', function () {
+            handleResourceClick('gather');
+        });
+        
+        document.getElementById(array.con_id).addEventListener('click', function () {
+            handleResourceClick('convert');
+        });
+        
+        // Single click event handler function
+        function handleResourceClick(actionType) {
+            switch (actionType) {
+                case 'gather':
+                        let update_cnt = document.getElementById(array.res_cnt);
+        
+                        // set maximum
+                        if (array.cnt >= array.max) {
+                            array.cnt = array.max;
+                            update_cnt.innerHTML = array.max;
+                        } 
+                        if (array.cnt < array.max) {
+                            array.cnt += array.gather_rate;
+                            update_cnt.innerHTML = (Math.round(array.cnt * 10) / 10).toFixed(1);
+                        }
+                    break;
+                case 'convert':
+                    // available conversions
+                    if (array.id === 'TWIGS' && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'sticks').cnt += 1;
+                    }
+                    if (array.id === 'PEBBLES' && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'stones').cnt += 1;
+                    }
+                    if (array.id === 'PINE_NEEDLES' && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'leaves').cnt += 1;
+                    }
+                    if (array.id === 'STICKS' && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'logs').cnt += 1;
+                    }
+                    if (array.id === 'STONES'  && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'rocks').cnt += 1;
+                    }
+                    if (array.id === 'LEAVES' && array.cnt >= array.convert) {
+                        array.cnt -= array.convert;
+                        resourcesData.find(res => res.id === 'brush').cnt += 1;
+                    }
+                    break;
+                // Add more cases as needed
+            }
+        }
+    }); // END: arrayData.forEach
+
+} // end function
 
 // used in costsList array
 export function add_lbl(array) {
@@ -958,7 +1028,7 @@ export function add_lbl(array) {
 //const formattedCostList = add_lbl(costList);
 //console.log(formattedCostList);
 
-export function setup_costList() {
+export function update_costList() {
     
     costList.forEach(cost => {
         cost.available_for_purchase = true;
@@ -978,6 +1048,9 @@ export function setup_costList() {
                 let matchedData = array.find(a => a.id === item);
             
                 if (matchedData) {
+                    // round matchedData values
+                    matchedData.cnt = Math.round(matchedData.cnt * 10) / 10;
+        
                     const colorClass = (matchedData.cnt >= value) ? 'ltgreentxt' : 'ltred';
                     const maxed = (value > matchedData.max) ? '***' : '';
                     let costs_label = `<div class="${colorClass}">${matchedData.cnt}&nbsp;/&nbsp;${value}&nbsp;${matchedData.lbl}${maxed}<br>`;
@@ -1028,8 +1101,7 @@ export function setup_costList() {
                 add_button.classList.add('purchase-button');
                 //object_array -- integrate costList data
                 add_button.setAttribute('object-array', JSON.stringify(object_array));
-
-                // function handlePurchaseButtonClicks()
+                // click function handlePurchaseButtonClicks()
                 add_button.addEventListener('click', handlePurchaseButtonClicks);
             }
             if (!cost.available_for_purchase) {
@@ -1041,9 +1113,70 @@ export function setup_costList() {
             }
         }
     }); // END: costList.forEach
+
+
+// for 'job' objects only
+const jobElements = objectElements.filter(object => object.obj_type === 'job');
+const popTribes = tribeData.filter(tribe => tribe.uses === 'POP');
+
+jobElements.forEach(job => {
+    
+    let remove_button = document.getElementById(job.remove_button);
+    
+    // hide initially
+    remove_button.innerHTML = '';
+    if (job.cnt > 0) {
+        remove_button.className = 'ltgreentxt';
+        remove_button.innerHTML = `[ ${job.remove_button_lbl} ]`;
+    }
+    
+    remove_button.classList.add('job-remove-button');
+    // click function handleJobRemoveButtonClicks()
+    remove_button.addEventListener('click', handleJobRemoveButtonClicks);
+
+});
+
+
+
 } // END:  function
 
-// Outside the main function, define the click event handler
+// Define the click event handler for job remove button
+export function handleJobRemoveButtonClicks(event) {
+    if (event.target.classList.contains('job-remove-button')) {
+
+        let clicked_button = event.target.id;
+        let matchedObject = objectElements.find(o => o.id + '_rem_button' === clicked_button);
+        let tribeMatch = tribeData.find(t => t.id === matchedObject.id);
+        let object_count = document.getElementById(matchedObject.object_count);
+
+        if (matchedObject.cnt > 0) {
+            
+            // for gatherers only
+            if (matchedObject.auto_res) {
+                resourcesData.forEach(resource => {
+                    if (resource.level === 1 && resource.auto_lvl1_rate !== 0) {
+                        resource.auto_lvl1_rate = 0;
+                    }
+                });
+            }
+
+            // remove object 
+            matchedObject.cnt -= 1;
+            // remove job assignment
+            tribeMatch.cnt -= 1;
+            // add back AVAILABLE_MEMBERS
+            tribeData[0].cnt += 1;
+            
+            // update object_count
+            object_count.innerHTML = `(${matchedObject.cnt})&nbsp`;
+            if (matchedObject.cnt === 0) {
+                object_count.innerHTML = '';
+            }
+        }
+    }
+}
+
+// Define the click event handler for purchases
 export function handlePurchaseButtonClicks(event) {
     if (event.target.classList.contains('purchase-button')) {
         // Retrieve the associated data attribute (object_array)
@@ -1073,10 +1206,29 @@ export function handlePurchaseButtonClicks(event) {
                 if (objectMod.makes === 'AVAILABLE_MEMBERS') {
                     tribeData[0].cnt += 1;
                 }
+                // POP_BASIC_HUNTER only
+// WIP: add CONSUMES option for spears
+                if (objectMod.id === 'POP_BASIC_HUNTER') {
+                    let hunter = tribeData.find(t => t.id === 'POP_BASIC_HUNTER');
+                    let spear = objectElements.find(o => o.id === 'CRAFT_SPEAR');
+                    hunter.cnt += 1;
+                    spear.cnt += 1; // spear cost added back for POP_BASIC_HUNTER use
+                }
                 // gatherers
                 if (objectMod.id === 'POP_GATHERER') {
                     let gatherer = tribeData.find(t => t.id === 'POP_GATHERER');
                     gatherer.cnt += 1;
+                }
+                // collectors
+                if (objectMod.id === 'POP_BASIC_COLLECTOR') {
+                    let collector = tribeData.find(t => t.id === 'POP_BASIC_COLLECTOR');
+                    resourcesData.forEach(res => {
+                        if (res.level === 1) {
+                            res.auto_lvl1_rate += 0.5;
+                        }
+                    });
+                    collector.cnt += 1;
+                    
                 }
                 // cost creep value updates for 'upgrade'
                 if (objectMod.obj_type === 'upgrade') {
@@ -1132,7 +1284,7 @@ export function handlePurchaseButtonClicks(event) {
     }
 }
 
-export function start_food() {
+export function update_food() {
 
     let fetch_TRIBE_LEADER_prod = document.getElementById('TRIBE_LEADER_prod_cnt');
     let fetch_food_dep_live = document.getElementById('food_dep_live_eid');
@@ -1154,7 +1306,7 @@ export function start_food() {
     var TRIBE_LEADER = tribeData.find(t => t.id === 'TRIBE_LEADER');
     var TRIBE_LEADER_food = TRIBE_LEADER.cnt * TRIBE_LEADER.food_gain;
     var gatherer_food = gatherer.cnt * gatherer.food_gain;
-    var basic_hunter_food = basic_hunter.cnt * basic_hunter.food_gain;
+    var basic_hunter_food = (basic_hunter.food_gain_flag) ? basic_hunter.cnt * basic_hunter.food_gain : 0;
     var population_cnt = document.getElementById('population_cnt');
     // gains
     foodResource[0].gain = gatherer_food + TRIBE_LEADER_food + basic_hunter_food;
@@ -1173,16 +1325,15 @@ export function start_food() {
             gatherer_prod_div.style.display = 'block';
             gatherer_prod.classList.add('ltgreentxt');
             gatherer_prod.innerHTML = '+' + gatherer_food;
-            gatherer_prod_lbl.innerHTML = '...gatherer:&nbsp;';
+            //gatherer_prod_lbl.innerHTML = '...gatherer:&nbsp;';
         }
-        
         if (basic_hunter.cnt === 0) {
             basic_hunter_prod_div.style.display = 'none';
         } else {
             basic_hunter_prod_div.style.display = 'block';
             basic_hunter_prod.classList.add('ltgreentxt');
-            basic_hunter_prod.innerHTML = '+' + gatherer_food;
-            basic_hunter_prod.innerHTML = '...gatherer:&nbsp;';
+            basic_hunter_prod.innerHTML = '+' + basic_hunter_food;
+            //basic_hunter_prod.innerHTML = '...basic hunter:&nbsp;';
         }
 
         fetch_TRIBE_LEADER_prod.innerHTML = TRIBE_LEADER_food;
