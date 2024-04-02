@@ -95,7 +95,8 @@ resourcesData[2].cnt = 5;
 
 // AVAILABLE_MEMBERS
 tribeData[0].cnt = 0;
-objectElements[14].cnt = 5;
+// CRAFT_SPEAR
+objectElements[14].cnt = 1;
 
 // test array
 //console.log(objectElements);
@@ -124,6 +125,9 @@ let tooltipContent = functions.createCustomTooltipContent(); // Create a custom 
 // Associate tooltip with click_text element
 functions.addTooltip(fetch_food_div, tooltipContent);
 
+// *** CREATE OBJECTS BY SECTION
+functions.create_object(objectElements);
+
 // global interval updates
 const interval_slow = 2000;
 const interval_normal = 1000;
@@ -134,17 +138,80 @@ function start_interval(s) {
 
     setInterval(() => {
 
-        // add costs and click action
-        functions.setup_costList();
+        // update costs and click actions
+        functions.update_costList();
+
+// *** objectElements updates
+
+// CRAFT_SPEAR
+objectElements.forEach(objectMod => {
+
+    if (objectMod.id === 'CRAFT_SPEAR') {
+
+        // update object_count
+        let object_count = document.getElementById(objectMod.object_count);
+        if (objectMod.cnt !== 0) {
+            object_count.innerHTML = `(${objectMod.cnt})&nbsp`;
+        } else {
+            object_count.innerHTML = '';
+        }
+
+        let basic_hunter = tribeData.find(t => t.id === 'POP_BASIC_HUNTER');
+        
+        // Calculate remaining time
+        let time = objectMod.decay_value / objectMod.decay_rate;
+        let minutes = Math.floor(time / 60);
+        let seconds = Math.floor(time % 60);
+
+        // requirements met
+        if (objectMod.cnt > 0 && basic_hunter.cnt > 0) {
+            basic_hunter.food_gain_flag = true; // flagged in food function to add food_gain
+
+            let decay_value_lbl = document.getElementById(objectMod.decay_value_lbl);
+            let decay_container = document.getElementById(objectMod.decay_container);
+
+            decay_container.style.display = 'block';
+            // Update decay value
+            objectMod.decay_value -= objectMod.decay_rate;
+            if (objectMod.decay_value < objectMod.decay_rate) {
+                objectMod.decay_value = 0;
+            }
+
+            // Display remaining time
+            decay_value_lbl.innerHTML = (Math.round(objectMod.decay_value * 10) / 10) + ` (${minutes}:${seconds < 10 ? '0' : ''}${seconds} remaining) `;
+            
+            if (objectMod.decay_value <= 0) {
+                objectMod.cnt -= 1;
+                objectMod.decay_value = objectMod.decay_value_start;
+            } else {
+                decay_value_lbl.className = 'ltgreentxt';
+            }
+        // requirements not met
+        } else {
+            basic_hunter.food_gain_flag = false;
+            decay_value_lbl.className = 'ltred';
+            decay_value_lbl.innerHTML = '0 -- New spears are needed.';
+        }
+        if (basic_hunter.cnt === 0) {
+            decay_container.style.display = 'none';
+        }
+    } 
+});
 
         // RESOURCES DATA
         resourcesData.forEach(resource => {
             // auto gatherers
             let auto_lvl1_res = document.getElementById(resource.auto_lvl1_res);
-            auto_lvl1_res.innerHTML = `&nbsp;(+${resource.auto_lvl1_rate}&nbsp;/s)`;
-            if (resource.auto_lvl1_rate === 0) {
-                auto_lvl1_res.innerHTML = '';
-            }
+            resourcesData.forEach(res => {
+                if (res.level === 1) {
+                    if (resource.auto_lvl1_rate === 0 || resource.cnt >= resource.max) {
+                        auto_lvl1_res.innerHTML = '';
+                    } else {
+                        auto_lvl1_res.innerHTML = `&nbsp;(+${resource.auto_lvl1_rate}&nbsp;/s)`;
+                    }
+                }
+            });
+            
             // update gather rate
             document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + (Math.round(resource.gather_rate * 10) / 10) + ' ' + resource.lbl.toUpperCase();
             // update resource counts
@@ -171,197 +238,20 @@ function start_interval(s) {
         });
         
         // FOOD
-        functions.start_food();
+        functions.update_food();
 
     }, interval_speed);
 }
 
-// *** CREATE OBJECTS BY SECTION
-functions.create_object(objectElements);
-
 // start 1 second interval
 start_interval(interval_normal);
 
-// WIP: needs its own function
-// RESOURCES DATA
-resourcesData.forEach(resource => {
+// display resources data
+functions.showElementID('resources_sect_id');
+// display gather buttons
+functions.showElementID('gather_sect_id');
+// display convert -- WIP: hidden
+//functions.showElementID('convert_sect_id');
 
-    // RESOURCES
-    functions.showElementID('resources_sect_id');
-    var resources_section = document.getElementById('resources_sect_id');
-
-    let resourcesContainer = document.createElement('div');
-    resourcesContainer.id = resource.res_container;
-    resources_section.appendChild(resourcesContainer);
-    // append -- resource.lbl
-    let cur_resource_lbl_1 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_1);
-    cur_resource_lbl_1.id = resource.res_cnt_lbl;
-    cur_resource_lbl_1.innerHTML = resource.lbl;
-    // append
-    let cur_resource_lbl_2 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_2);
-    cur_resource_lbl_2.innerHTML = ':&nbsp;';
-    // append -- resource.cnt
-    let cur_resource_lbl_3 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_3);
-    cur_resource_lbl_3.id = resource.res_cnt;
-    cur_resource_lbl_3.innerHTML = resource.cnt;
-    // append
-    let cur_resource_lbl_4 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_4);
-    cur_resource_lbl_4.innerHTML = '&nbsp;/&nbsp;';
-    // append -- max
-    let cur_resource_lbl_5 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_5);
-    cur_resource_lbl_5.id = resource.res_cnt_max;
-    cur_resource_lbl_5.innerHTML = resource.max;
-    
-    // WIP auto gatherers
-    let cur_resource_lbl_6 = document.createElement('span');
-    resourcesContainer.appendChild(cur_resource_lbl_6);
-    cur_resource_lbl_6.id = resource.auto_lvl1_res;
-    cur_resource_lbl_6.innerHTML = '&nbsp;(+0&nbsp;/s)';
-
-    // hide all
-    functions.hideElementID(resource.res_container);
-    
-    // show starting resources
-    functions.showElementID('res_container_TWIGS');
-    functions.showElementID('res_container_PEBBLES');
-    functions.showElementID('res_container_PINE_NEEDLES');
-
-    // show/hide elements individually
-    // showElementID('resource_000');
-
-    // GATHER
-    functions.showElementID('gather_sect_id');
-    var gather_section = document.getElementById('gather_sect_id');
-
-    var gatherContainer = document.createElement('div');
-    gatherContainer.id = resource.gatherDiv;
-
-    var gatherSpan1 = document.createElement('span');
-    var gatherSpan2 = document.createElement('span');
-
-    gatherSpan1.id = resource.gather_btn;
-    gatherSpan1.innerHTML = resource.print_gather;
-
-    gatherSpan2.id = resource.gather_lbl;
-    gatherSpan2.innerHTML = resource.print_gather2;
-
-    gatherContainer.appendChild(gatherSpan1);
-    gatherContainer.appendChild(gatherSpan2);
-    gather_section.appendChild(gatherContainer);
-
-    // hide all
-    functions.hideElementID(resource.gatherDiv);
-
-    // show starting resources
-    functions.showElementID('gather_div_TWIGS');
-    functions.showElementID('gather_div_PEBBLES');
-    functions.showElementID('gather_div_PINE_NEEDLES');
-
-    // show/hide elements individually
-    // showElementID('gather_div_twigs');
-    
-    // CONVERT
-    //showElementID('convert_sect_id');
-    var convert_section = document.getElementById('convert_sect_id');
-
-    var convertContainer = document.createElement('div');
-    convertContainer.id = resource.con_id;
-    
-    var convertSpan1 = document.createElement('span');
-    var convertSpan2 = document.createElement('span');
-
-    convertSpan1.id = resource.con_lbl;
-    convertSpan1.innerHTML = resource.print_convert;
-
-    convertSpan2.id = resource.con_btn;
-    convertSpan2.innerHTML = resource.print_convert2;
-    
-    convertContainer.appendChild(convertSpan1);
-    convertContainer.appendChild(convertSpan2);
-    convert_section.appendChild(convertContainer);
-
-    // always hide these non-convertibles
-    functions.hideElementID('conDiv_logs');
-    functions.hideElementID('conDiv_rocks');
-    functions.hideElementID('conDiv_brush');
-
-    // show starting resources
-    // showElementID('conDiv_000');
-
-    // show/hide elements individually
-    // showElementID('conDiv_000');
-
-    // hide all
-    // hideElementID(resource.con_lbl);
-
-    // if hidden
-    //showElementID('resource_twigs');
-    //showElementID('gather_div_twigs');
-
-
-
-// Adding click event listener to both buttons
-document.getElementById(resource.gather_btn).addEventListener('click', function () {
-    handleResourceClick('gather');
-});
-
-document.getElementById(resource.con_id).addEventListener('click', function () {
-    handleResourceClick('convert');
-});
-
-// Single click event handler function
-function handleResourceClick(actionType) {
-    switch (actionType) {
-        case 'gather':
-                let update_cnt = document.getElementById(resource.res_cnt);
-
-                // set maximum
-                if (resource.cnt >= resource.max) {
-                    resource.cnt = resource.max;
-                    update_cnt.innerHTML = resource.max;
-                } 
-                if (resource.cnt < resource.max) {
-                    resource.cnt += resource.gather_rate;
-                    update_cnt.innerHTML = (Math.round(resource.cnt * 10) / 10).toFixed(1);
-                }
-            break;
-        case 'convert':
-            // available conversions
-            if (resource.id === 'TWIGS' && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'sticks').cnt += 1;
-            }
-            if (resource.id === 'PEBBLES' && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'stones').cnt += 1;
-            }
-            if (resource.id === 'PINE_NEEDLES' && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'leaves').cnt += 1;
-            }
-            if (resource.id === 'STICKS' && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'logs').cnt += 1;
-            }
-            if (resource.id === 'STONES'  && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'rocks').cnt += 1;
-            }
-            if (resource.id === 'LEAVES' && resource.cnt >= resource.convert) {
-                resource.cnt -= resource.convert;
-                resourcesData.find(res => res.id === 'brush').cnt += 1;
-            }
-            break;
-        // Add more cases as needed
-    }
-}
-
-}); // END: RESOURCES DATA
-
-// test
-functions.setup_costList();
+// start gather/convert function
+functions.start_gather(resourcesData);
