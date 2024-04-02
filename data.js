@@ -36,8 +36,8 @@ export function init_resourcesData() {
         resourcesIndex.con_lbl = 'convert_' + resourcesIndex.id;
         resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
         resourcesIndex.convert = 10;
-        resourcesIndex.cnt = 500;
-        resourcesIndex.max = 500;
+        resourcesIndex.cnt = 2000;
+        resourcesIndex.max = 2000;
         resourcesIndex.res_container = 'res_container_' + resourcesIndex.id;
         resourcesIndex.res_cnt = 'res_cnt_' + resourcesIndex.id;
         resourcesIndex.res_cnt_lbl = 'res_cnt_lbl_' + resourcesIndex.id;
@@ -60,9 +60,9 @@ export function init_tribeData() {
         // resource 'AVAILABLE_MEMBERS' for jobsData
         { id: 'AVAILABLE_MEMBERS', lbl: 'Available Members', print: '-- Available Members:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Available Members' },
         { id: 'TRIBE_LEADER', lbl: 'Tribe Leaders', print: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'job', food_gain: 0.2, food_gain_eid: 'food_gain_eid' },
-        { id: 'POP_GATHERER', lbl: 'Gatherers', print: 'Gatherers:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Gatherer', food_gain: 1, food_consume: 0.2 }, // net gain: 0.8
-        { id: 'POP_BASIC_HUNTER', lbl: 'Basic Hunters', print: 'Basic Hunters:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Hunter', food_gain: 2, food_consume: 0.4 },
-        { id: 'POP_BASIC_COLLECTOR', lbl: 'Basic Collectors', print: 'Basic Collectors:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Collector', },
+        { id: 'POP_GATHERER', lbl: 'Gatherers', print: 'Gatherers:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Gatherer', food_gain: 1, food_consume: 0.2, uses: 'POP' }, // net gain: 0.8
+        { id: 'POP_BASIC_HUNTER', lbl: 'Basic Hunters', print: 'Basic Hunters:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Hunter', food_gain: 2, food_consume: 0.4, food_gain_flag: false, uses: 'POP' },
+        { id: 'POP_BASIC_COLLECTOR', lbl: 'Basic Collectors', print: 'Basic Collectors:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Collector', uses: 'POP' },
         { id: 'TOTAL_POPULATION', lbl: 'Total Population', print: 'Total Population:&nbsp;', cnt: 0, type: 'total' },
     ];
     
@@ -225,7 +225,7 @@ export function init_objectElements() {
             lvl: 1,
             }, 
         { id: 'POP_BASIC_HUNTER', lbl: 'Basic Hunter', obj_type: 'job',
-            title: '(WIP)JOB: Basic Hunter',
+            title: 'JOB: Basic Hunter',
             desc: '...Automatically hunts basic game to help feed your people.<br>...Requires basic weapons.',
             gain_lbl: '+2 Food/s', 
             gain_detail_lbl: 'Hunts squirrel and deer.', 
@@ -237,6 +237,7 @@ export function init_objectElements() {
             gain_lbl: '+0.5/s Twigs, Pebbles, and Pine Needles', 
             gain_detail_lbl: 'Automatically gathers these 3 basic materials: twigs, pebbles, and pine needles.', 
             lvl: 1,
+            auto_res: true,
             }, 
         // static crafted items
         // WIP: needs to be destroyed over time or require resources/sec
@@ -281,7 +282,9 @@ export function init_objectElements() {
             
         }
         if (OE_Index.obj_type === 'job') {
-            OE_Updates.add_button_lbl = 'ASSIGN';
+            OE_Updates.add_button_lbl = '+';
+            OE_Updates.remove_button = OE_Index.id + '_rem_button';
+            OE_Updates.remove_button_lbl = '-';
             // tribeData[0].id === 'AVAILABLE_MEMBERS'
             // tribeData[0].cnt
         }
@@ -294,7 +297,17 @@ export function init_objectElements() {
             OE_Updates.progress_lbl = OE_Index.id + '_progress_lbl';
             OE_Updates.progress_value = 0;
             OE_Updates.progress_gain = 10;
-    }
+        }
+        // add decay values
+        if (OE_Index.id === 'CRAFT_SPEAR') {
+            OE_Updates.decay_container = OE_Index.id + '_decay_container';
+            OE_Updates.decay_lbl = OE_Index.id + '_decay';
+            OE_Updates.decay_value_lbl = OE_Index.id + 'decay_value_lbl';
+            OE_Updates.decay_value = 10; // 100
+            OE_Updates.decay_value_start = 10; // 100
+            OE_Updates.decay_rate = 0.8;
+            OE_Updates.decay_timer = 0;
+        }
         // Assign all updates to objectElements properties
         Object.assign(OE_Index, OE_Updates);
     }
