@@ -164,7 +164,7 @@ export function init_costList() {
         { id: 'BUILDING_PRIMITIVE_SHELTER', costs: { 'TWIGS': 500, 'PEBBLES': 100 }, cost_type: 'res' }, 
         { id: 'BUILDING_BASIC_CRAFTING_STATION', costs: { 'TWIGS': 100, 'PEBBLES': 500, 'PINE_NEEDLES': 50 }, cost_type: 'res' }, 
         { id: 'POP_GATHERER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
-        { id: 'POP_BASIC_HUNTER', costs: { 'AVAILABLE_MEMBERS': 1, 'CRAFT_SPEAR': 1 }, cost_type: ['job', 'craft'] }, // +craft
+        { id: 'POP_BASIC_HUNTER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, // OLD : cost_type: ['job', 'craft']
         { id: 'POP_BASIC_COLLECTOR', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
         { id: 'CRAFT_SPEAR', costs: { 'TWIGS': 10, 'PEBBLES': 10 }, cost_type: 'res' }, 
         { id: 'CRAFT_SLING', costs: { 'TWIGS': 10 }, cost_type: 'res' }, 
@@ -230,6 +230,8 @@ export function init_objectElements() {
             gain_lbl: '+2 Food/s', 
             gain_detail_lbl: 'Hunts squirrel and deer.', 
             lvl: 2,
+            // static
+            consumes: {'CRAFT_SPEAR': 1},
             }, 
         { id: 'POP_BASIC_COLLECTOR', lbl: 'Basic Resource Collector', obj_type: 'job',
             title: 'JOB: Basic Collector',
@@ -237,6 +239,7 @@ export function init_objectElements() {
             gain_lbl: '+0.5/s Twigs, Pebbles, and Pine Needles', 
             gain_detail_lbl: 'Automatically gathers these 3 basic materials: twigs, pebbles, and pine needles.', 
             lvl: 1,
+            // static
             auto_res: true,
             }, 
         // static crafted items
@@ -252,13 +255,14 @@ export function init_objectElements() {
         const OE_Index = objectElements[i];
         const OE_Updates = {};
         // *** all static ids ***
-        // .id .lbl .type
+        // .id .lbl .obj_type
         // *** dynanic ids ***
         OE_Updates.section = OE_Index.obj_type + '_sect_id';
         OE_Updates.container_id = OE_Index.id + '_container';
         OE_Updates.first_line_div = OE_Index.id + '_first_line_div';
         OE_Updates.details_div = OE_Index.id + '_details_div';
         OE_Updates.toggle_button = OE_Index.id + '_toggle_button';
+        OE_Updates.toggle_button_toggled = false;
         OE_Updates.object_count = OE_Index.id + '_object_count';
         OE_Updates.add_button = OE_Index.id + '_add_button';
         OE_Updates.add_button_max = OE_Index.id + '_add_button_max';
@@ -282,9 +286,10 @@ export function init_objectElements() {
             
         }
         if (OE_Index.obj_type === 'job') {
-            OE_Updates.add_button_lbl = '+';
+            OE_Updates.add_button_lbl = 'ASSIGN';
             OE_Updates.remove_button = OE_Index.id + '_rem_button';
-            OE_Updates.remove_button_lbl = '-';
+            OE_Updates.remove_button_lbl = 'REASSIGN';
+            OE_Updates.consume_div = OE_Index.id + '_consume_div';
             // tribeData[0].id === 'AVAILABLE_MEMBERS'
             // tribeData[0].cnt
         }
@@ -306,7 +311,10 @@ export function init_objectElements() {
             OE_Updates.decay_value = 10; // 100
             OE_Updates.decay_value_start = 10; // 100
             OE_Updates.decay_rate = 0.8;
+            OE_Updates.total_decay_value = 0; // in code: .decay_value * .cnt
+            OE_Updates.decay_started = false;
             OE_Updates.decay_timer = 0;
+
         }
         // Assign all updates to objectElements properties
         Object.assign(OE_Index, OE_Updates);
