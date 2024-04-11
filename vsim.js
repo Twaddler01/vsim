@@ -43,6 +43,38 @@ document.getElementById("exportButton").addEventListener("click", function () {
     document.body.removeChild(link);
 });
 
+// *** allow exporting of HTML to inspect/debug elements
+// Create the "Export HTML" button
+const exportHTMLButton = document.createElement('button');
+exportHTMLButton.id = 'exportHTMLButton';
+exportHTMLButton.textContent = 'Export HTML';
+
+// Append the button to the document body
+document.body.appendChild(exportHTMLButton);
+
+// Add an event listener to the "Export HTML" button
+exportHTMLButton.addEventListener("click", function () {
+    // Get the HTML content of the entire document
+    let htmlContent = document.documentElement.outerHTML;
+
+    // Create a Blob containing the HTML content
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'vsim_page.html';
+
+    // Append the link to the document
+    document.body.appendChild(link);
+
+    // Trigger the download
+    link.click();
+
+    // Remove the link from the document
+    document.body.removeChild(link);
+});
+
 // *** main div sections ****
 // note: always hidden by default
 
@@ -52,8 +84,8 @@ functions.createNewSection('div', 'tribe_sect_id', null, '<p class="divsections"
 functions.createNewSection('div', 'TRIBE_LEADER_obj', null, null, 'tribe_sect_id');
 functions.createNewSection('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
 functions.createNewSection('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
-functions.createNewSection('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p>', 'body');
-functions.createNewSection('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p>', 'body');
+functions.createNewSection('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p><hr>', 'body');
+functions.createNewSection('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p><hr>', 'body');
 functions.createNewSection('div', 'jobs_sect_id', null, '<p class="divsections">JOBS</p>', 'body');
 functions.createNewSection('div', 'convert_sect_id', null, '<p class="divsections">CONVERT</p>', 'body');
 functions.createNewSection('div', 'convert_lvl1', null, null, 'convert_sect_id');
@@ -96,7 +128,7 @@ resourcesData[2].cnt = 5;
 // AVAILABLE_MEMBERS
 tribeData[0].cnt = 0;
 // CRAFT_SPEAR
-objectElements[14].cnt = 1;
+objectElements[14].cnt = 2;
 
 // test array
 //console.log(objectElements);
@@ -155,6 +187,12 @@ objectElements.forEach(objectMod => {
         } else {
             object_count.innerHTML = '';
         }
+        
+        // assign initial total_decay_value
+        if (objectMod.decay_value === objectMod.decay_value_start) {
+            objectMod.total_decay_value = objectMod.decay_value_start * objectMod.cnt;
+        }
+
 
         let basic_hunter = tribeData.find(t => t.id === 'POP_BASIC_HUNTER');
         
@@ -162,6 +200,10 @@ objectElements.forEach(objectMod => {
         let time = objectMod.decay_value / objectMod.decay_rate;
         let minutes = Math.floor(time / 60);
         let seconds = Math.floor(time % 60);
+        
+        let time_total = objectMod.total_decay_value / objectMod.decay_rate;
+        let minutes_total = Math.floor(time_total / 60);
+        let seconds_total = Math.floor(time_total % 60);
 
         // requirements met
         if (objectMod.cnt > 0 && basic_hunter.cnt > 0) {
@@ -171,14 +213,26 @@ objectElements.forEach(objectMod => {
             let decay_container = document.getElementById(objectMod.decay_container);
 
             decay_container.style.display = 'block';
+
             // Update decay value
             objectMod.decay_value -= objectMod.decay_rate;
-            if (objectMod.decay_value < objectMod.decay_rate) {
-                objectMod.decay_value = 0;
-            }
+            objectMod.total_decay_value = objectMod.decay_value + (objectMod.decay_value_start * objectMod.cnt) - objectMod.decay_value_start;
 
+            // Check if decay_value is less than 0
+            let displayValue = Math.round(objectMod.decay_value * 10) / 10;
+            let displayValue_total = Math.round(objectMod.total_decay_value * 10) / 10;
+            if (displayValue < 0) {
+                displayValue = 0; // Set displayValue to 0 if it's less than 0
+            }
+            if (displayValue_total < 0) {
+                displayValue_total = 0; // Set displayValue_total to 0 if it's less than 0
+            }
             // Display remaining time
-            decay_value_lbl.innerHTML = (Math.round(objectMod.decay_value * 10) / 10) + ` (${minutes}:${seconds < 10 ? '0' : ''}${seconds} remaining) `;
+            decay_value_lbl.innerHTML = 
+            `<span class="regtxt">CURRENT:</span> ` + 
+            displayValue + ` (${minutes}:${seconds < 10 ? '0' : ''}${seconds})` + 
+            `<br><span class="regtxt">TOTAL:</span> ` + 
+            displayValue_total + ` (${minutes_total}:${seconds_total < 10 ? '0' : ''}${seconds_total})`;
             
             if (objectMod.decay_value <= 0) {
                 objectMod.cnt -= 1;
