@@ -4,6 +4,8 @@ This is going to be an incremental / simulated gather-type "village" game with a
 # Link
 https://twaddler01.github.io/vsim/vsim.html
 # Updates
+* (04-10-2024)
+Some visual updates added to make things look a little cleaner. Ready to start adding more elements now that most of the initial coding is done.
 * (04-02-2024)
 Updated quite a bit. Integrated more into functions, such as resourcesData, Organizing arrays isn't my strong suit, but it's working well enough so far. Added the ability to remove/add job assignments in jobs section. The goals section will eventually guide the player and there will be an order to objects added (not all will be available at game start). Saving the gamestate (or rather, array values, using localstorage), will be coming soon. 
 * (03-18-2024)
