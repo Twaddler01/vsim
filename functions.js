@@ -3,9 +3,6 @@
 // import arrays
 import { resourcesData, tribeData, foodSources, foodResource, goalsData, objectiveData, objectElements, costList } from './data.js';
 
-// new globals
-const global_matched_costs = [];
-
 export function newEl(name, type, parentID, id, cls, content) {
     var element = document.createElement(type);
     parentID.appendChild(element);
@@ -222,7 +219,8 @@ export function food_section(food_first_run) {
         gather_food_gain.id = 'gather_food_gain';
         gather_food_btn.className = 'button_orange';
         gather_food_gain.className = 'ltgreentxt';
-        gather_food_btn.innerHTML = '[ GATHER FOOD ]&nbsp;';
+        gather_food_btn.innerHTML = '<button class="button_orange" style="background-color:#000000;">GATHER FOOD</button>&nbsp;';
+
         let food_level = document.createElement('span');
         food_gather_div.appendChild(food_level);
         food_level.id = 'food_level';
@@ -630,7 +628,6 @@ export function createCustomTooltipContent() {
 // create dynamic objects from an array
 export function create_object(obj_data) {
 
-    //const object_name = obj_name;
     const arrayData = obj_data;
 
     // create dynamic elements
@@ -667,89 +664,28 @@ export function create_object(obj_data) {
         // hide details initially
         details_div.style.display = 'none';
 
+        // (insertBefore: button_toggle)
+        // 'curr_status' + 'job_status' children go here
+
         // [ + ] details initial -- here only
         newEl('button_toggle', 'span', first_line_div, null, null, null);
-        button_toggle.innerHTML = '<span id="' + array.toggle_button + '"> <span style="color:white">[ + ]</span> <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
+        button_toggle.innerHTML = '<span id="' + array.toggle_button + '"> <span style="color:white">[ + ]</span> <span class="button_orange"> ' + array.title + '</span></span>';
 
         // use button element created in above span
         let toggleButton = document.getElementById(array.toggle_button);
         toggleButton.className = 'button_orange';
 
+        // object count span
+        newEl('object_count', 'span', first_line_div, array.object_count, 'button_orange', null);
+        object_count.innerHTML = `&nbsp;(${array.cnt})&nbsp;`;
 
-
-
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Function to create event listener for each toggle button
-    function createEventListener(details_div, toggleButton, container_id) {
-        let initialTitle = toggleButton.dataset.title; // Store the initial title
-
-        toggleButton.addEventListener('click', function() {
-            // Check if the button is already active
-            if (toggleButton.classList.contains('active')) {
-                // If active, hide the details_div and reset button state
-                details_div.style.display = 'none';
-                toggleButton.classList.remove('active');
-                toggleButton.innerHTML = '<span style="color:white">[ + ]</span> ' + initialTitle;
-                container_id.style.backgroundColor = '';
-            } else {
-                // Reset state of previously clicked button and its associated container
-                let prevButton = document.querySelector('.toggle-button.active');
-                if (prevButton) {
-                    let prevContainer = document.getElementById(prevButton.dataset.container);
-                    let prevDetailsDiv = document.getElementById(prevButton.dataset.details);
-                    prevButton.classList.remove('active');
-                    prevButton.innerHTML = '<span style="color:white">[ + ]</span> ' + prevButton.dataset.title;
-                    prevDetailsDiv.style.display = 'none'; // Hide previously active details_div
-                    prevContainer.style.backgroundColor = '';
-                }
-
-                // Toggle current button and show/hide details
-                details_div.style.display = 'block';
-                container_id.style.backgroundColor = "#252525"; // Set background color
-                toggleButton.classList.add('active');
-                toggleButton.innerHTML = '<span style="color:white">[ - ]</span> ' + initialTitle; // Reset to initial title
-            }
-        });
-    }
-
-    // Iterate through each array item and attach event listeners
-    objectElements.forEach(array => {
-        let details_div = document.getElementById(array.details_div);
-        let toggleButton = document.getElementById(array.toggle_button);
-        let container_id = document.getElementById(array.container_id);
-        toggleButton.classList.add('toggle-button'); // Add a class to identify toggle buttons
-        toggleButton.dataset.title = array.title;
-        toggleButton.dataset.container = array.container_id; // Store the container id
-        toggleButton.dataset.details = array.details_div; // Store the details_div id
-        details_div.classList.add('details');
-        createEventListener(details_div, toggleButton, container_id);
-    });
-});
-
-/*
-        // Add an onclick event listener to the button (closure method)
-        toggleButton.addEventListener('click', (function(details) {
-            return function() {
-                // Toggle the display property of the captured 'details_div'
-                if (!array.toggle_button_toggled && details.style.display === 'none') {
-                    details.style.display = 'block';
-                    array.toggle_button_toggled = true;
-                    toggleButton.innerHTML = '<span id="' + array.toggle_button + '"> [ - ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
-                } else {
-                    details.style.display = 'none';
-                    array.toggle_button_toggled = false;
-                    toggleButton.innerHTML = '<span id="' + array.toggle_button + '"> [ + ] <span class="button_orange"> ' + array.title + '&nbsp;</span></span>';
-                }
-            };
-        })(details_div)); // Pass the current 'details_div' to the closure
-*/
+        if (array.cnt === 0) {
+            object_count.innerHTML = '';
+        }
 
         // spacer
-        newEl('add_button_spacer', 'span', first_line_div, null, null, null);
-        add_button_spacer.innerHTML = '&nbsp;&nbsp;';
+        newEl('object_count_spacer', 'span', first_line_div, null, null, null);
+        object_count_spacer.innerHTML = '&nbsp;&nbsp;';
 
         // [ BUY_BUTTON ]
         newEl('add_button_lbl', 'button', first_line_div, array.add_button, 'ltred', null);
@@ -760,13 +696,21 @@ document.addEventListener('DOMContentLoaded', function() {
         newEl('add_button_spacer', 'span', first_line_div, null, null, null);
         add_button_spacer.innerHTML = '&nbsp;';
 
-// JOB REMOVE BUTTON
-
+        // *** JOB specific
+        
         if (array.obj_type === 'job') {
+            
+            // remove button
             newEl('remove_button_lbl', 'button', first_line_div, array.remove_button, null, null);
             remove_button_lbl.style.backgroundColor = "#000000";
             remove_button_lbl.classList.add('button_container');
             remove_button_lbl.innerHTML = `${array.remove_button_lbl}`;
+            
+            // job status
+            let job_status = document.createElement('div');
+            job_status.id = array.curr_status;
+            job_status.className = 'ltgreentxt';
+            first_line_div.insertBefore(job_status, button_toggle);
         }
 
         // craft progress
@@ -777,14 +721,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // spacer
         newEl('object_count_spacer', 'span', first_line_div, null, null, null);
-        object_count_spacer.innerHTML = '&nbsp;&nbsp;';
+        object_count_spacer.innerHTML = '&nbsp;';
 
-        // object count span
-        newEl('object_count', 'span', first_line_div, array.object_count, 'button_orange', null);
-        object_count.innerHTML = `(${array.cnt})&nbsp`;
+        // *** TIMERS
 
-        if (array.cnt === 0) {
-            object_count.innerHTML = '';
+        // timer for certain 'job' decaying resources
+        if (array.obj_type === 'job') {
+            // POP_BASIC_HUNTER
+            if (array.id === 'POP_BASIC_HUNTER') {
+                let timer = document.createElement('div');
+                timer.id = array.timer;
+                timer.className = 'ltgreentxt';
+                first_line_div.insertBefore(timer, button_toggle);
+            }
         }
 
         // separator & spacer
@@ -813,6 +762,14 @@ document.addEventListener('DOMContentLoaded', function() {
         newEl('description', 'div', details_div, null, null, null);
         description.innerHTML = array.desc;
 
+        // extras: bonus
+        if (array.id === 'BUILDING_PRIMITIVE_ALTAR') {
+            newEl('bonus_lbl', 'div', details_div, null, null, null);
+            bonus_lbl.innerHTML = '<p class="yellowtxt">BONUS:</p>';
+            newEl('bonus_txt', 'p', details_div, array.bonus_txt_id, 'ltred', null);
+            bonus_txt.innerHTML = '(LEVEL 5): Grants the ability to collect level 2 resources (sticks, stones, and leaves) diectly.';
+        }
+
         // WIP hiding
         newEl('job_lbl', 'div', details_div, null, null, null);
         job_lbl.innerHTML = '<p class="yellowtxt">CIVILIAN JOB:</p>';
@@ -823,15 +780,13 @@ document.addEventListener('DOMContentLoaded', function() {
         consume_lbl.innerHTML = '<p class="yellowtxt">CONSUMES:</p>';
         consume_lbl.style.display = 'none';
 
-// CRAFT_SPEAR CONSUME
-
-if (array.consumes && array.consumes['CRAFT_SPEAR']) {
-    consume_lbl.style.display = 'block';
-    newEl('consume_div', 'div', consume_lbl, array.consume_div, null, null);
-}
-
-// DECAY
-
+        // CRAFT_SPEAR CONSUME
+        if (array.consumes && array.consumes['CRAFT_SPEAR']) {
+            consume_lbl.style.display = 'block';
+            newEl('consume_div', 'div', consume_lbl, array.consume_div, null, null);
+        }
+        
+        // DECAY
         if (array.id === 'CRAFT_SPEAR') {
             newEl('decay_container', 'div', details_div, array.decay_container, null, null);
             // append
@@ -854,6 +809,62 @@ if (array.consumes && array.consumes['CRAFT_SPEAR']) {
 
     }); // END: arrayData
 } // END: function
+
+// Function to create event listener for each toggle button
+export function createEventListener(details_div, toggleButton, container_id) {
+    let initialTitle = toggleButton.dataset.title; // Store the initial title
+
+    toggleButton.addEventListener('click', function() {
+        // Check if the button is already active
+        if (toggleButton.classList.contains('active')) {
+            // If active, hide the details_div and reset button state
+            details_div.style.display = 'none';
+            toggleButton.classList.remove('active');
+            toggleButton.innerHTML = '<span style="color:white">[ + ]</span> ' + initialTitle;
+            container_id.style.backgroundColor = '';
+        } else {
+            // Reset state of previously clicked button and its associated container
+            let prevButton = document.querySelector('.toggle-button.active');
+            if (prevButton) {
+                let prevContainer = document.getElementById(prevButton.dataset.container);
+                let prevDetailsDiv = document.getElementById(prevButton.dataset.details);
+                prevButton.classList.remove('active');
+                prevButton.innerHTML = '<span style="color:white">[ + ]</span> ' + prevButton.dataset.title;
+                prevDetailsDiv.style.display = 'none'; // Hide previously active details_div
+                prevContainer.style.backgroundColor = '';
+            }
+
+            // Toggle current button and show/hide details
+            details_div.style.display = 'block';
+            container_id.style.backgroundColor = "#252525"; // Set background color
+            toggleButton.classList.add('active');
+            toggleButton.innerHTML = '<span style="color:white">[ - ]</span> ' + initialTitle; // Reset to initial title
+        }
+    });
+}
+
+// Function to attach event listeners to toggle buttons
+export function attachEventListeners() {
+    // Iterate through each array item and attach event listeners
+    objectElements.forEach(array => {
+        let details_div = document.getElementById(array.details_div);
+        let toggleButton = document.getElementById(array.toggle_button);
+        let container_id = document.getElementById(array.container_id);
+        toggleButton.classList.add('toggle-button'); // Add a class to identify toggle buttons
+        toggleButton.dataset.title = array.title;
+        toggleButton.dataset.container = array.container_id; // Store the container id
+        toggleButton.dataset.details = array.details_div; // Store the details_div id
+        details_div.classList.add('details');
+        createEventListener(details_div, toggleButton, container_id);
+    });
+}
+// Run the event listener setup initially
+// attachEventListeners();
+
+// Whenever you modify arrayData, call attachEventListeners() again
+// For example:
+// arrayData.push({ /* new building data */ });
+// attachEventListeners(); // Call this after modifying arrayData
 
 export function start_gather(obj_data) {
     
@@ -897,7 +908,7 @@ export function start_gather(obj_data) {
         // show/hide elements individually
         // showElementID('resource_000');
     
-// GATHER
+        // GATHER
     
         newEl('gath_container', 'div', gather_section, array.gatherDiv, null, null);
         // append
@@ -918,34 +929,33 @@ export function start_gather(obj_data) {
         // show/hide elements individually
         // showElementID('gather_div_twigs');
 
-// CONVERT
+        // CONVERT
     
         newEl('conv_container', 'div', convert_section, array.con_id, null, null);
         // append
         newEl('convertSpan1', 'span', conv_container, array.con_lbl, null, null);
         convertSpan1.innerHTML = array.print_convert;
+        // append
         newEl('convertSpan2', 'span', conv_container, array.con_btn, null, null);
         convertSpan2.innerHTML = array.print_convert2;
-    
+
         // always hide these non-convertibles
-        hideElementID('conDiv_logs');
-        hideElementID('conDiv_rocks');
-        hideElementID('conDiv_brush');
+        hideElementID('conDiv_LOGS');
+        hideElementID('conDiv_ROCKS');
+        hideElementID('conDiv_BRUSH');
     
         // show starting resources
-        // showElementID('conDiv_000');
-    
+        //showElementID('conDiv_STICKS');
+        //showElementID('conDiv_STONES');
+        //showElementID('conDiv_LEAVES');
+
         // show/hide elements individually
         // showElementID('conDiv_000');
     
         // hide all
-        // hideElementID(resource.con_lbl);
-    
-        // if hidden
-        //showElementID('resource_twigs');
-        //showElementID('gather_div_twigs');
+        // hideElementID(array.con_lbl);
 
-// CLICKS
+        // CLICKS
 
         // Adding click event listener to both buttons
         document.getElementById(array.gather_btn).addEventListener('click', function () {
@@ -960,43 +970,32 @@ export function start_gather(obj_data) {
         function handleResourceClick(actionType) {
             switch (actionType) {
                 case 'gather':
-                        let update_cnt = document.getElementById(array.res_cnt);
+                    let update_cnt = document.getElementById(array.res_cnt);
         
-                        // set maximum
-                        if (array.cnt >= array.max) {
-                            array.cnt = array.max;
-                            update_cnt.innerHTML = array.max;
-                        } 
-                        if (array.cnt < array.max) {
-                            array.cnt += array.gather_rate;
-                            update_cnt.innerHTML = (Math.round(array.cnt * 10) / 10).toFixed(1);
-                        }
+                    // set maximum
+                    if (array.cnt >= array.max) {
+                        array.cnt = array.max;
+                        update_cnt.innerHTML = array.max;
+                    } 
+                    if (array.cnt < array.max) {
+                        array.cnt += array.gather_rate;
+                        update_cnt.innerHTML = (Math.round(array.cnt * 10) / 10).toFixed(1);
+                    }
                     break;
                 case 'convert':
                     // available conversions
-                    if (array.id === 'TWIGS' && array.cnt >= array.convert) {
+                    if (array.cnt >= array.convert && (array.cnt + array.convert) <= array.max) {
                         array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'sticks').cnt += 1;
-                    }
-                    if (array.id === 'PEBBLES' && array.cnt >= array.convert) {
-                        array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'stones').cnt += 1;
-                    }
-                    if (array.id === 'PINE_NEEDLES' && array.cnt >= array.convert) {
-                        array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'leaves').cnt += 1;
-                    }
-                    if (array.id === 'STICKS' && array.cnt >= array.convert) {
-                        array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'logs').cnt += 1;
-                    }
-                    if (array.id === 'STONES'  && array.cnt >= array.convert) {
-                        array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'rocks').cnt += 1;
-                    }
-                    if (array.id === 'LEAVES' && array.cnt >= array.convert) {
-                        array.cnt -= array.convert;
-                        resourcesData.find(res => res.id === 'brush').cnt += 1;
+                        let made_res = resourcesData.find(r => r.id === array.makes);
+                        
+                        // altar modifications
+                        // WIP: level 2 only
+                        let obj_element = objectElements.find(o => o.id === 'BUILDING_PRIMITIVE_ALTAR');
+                        let convert_gain = obj_element.cnt * array.convert_mult;
+                        if (obj_element.cnt === 0 || made_res.level !== 2) {
+                            convert_gain = 1;
+                        }
+                        made_res.cnt += convert_gain;
                     }
                     break;
                 // Add more cases as needed
@@ -1056,7 +1055,7 @@ export function update_costList() {
         for (let [item, value] of Object.entries(object_costs)) {
 
             // process all cost data
-            function handleCosts(costType, array, item, value, cost, object_array, global_matched_costs) {
+            function handleCosts(costType, array, item, value, cost, object_array) { // global_matched_costs
             
                 let matchedData = array.find(a => a.id === item);
             
@@ -1098,25 +1097,20 @@ export function update_costList() {
                             }
                         }
                     } 
-            
-                    const dataExists = global_matched_costs.some(cost => cost.cost_id === matchedData.id && cost.make === object_array.id);
-                    if (!dataExists && matchedData.id) {
-                        global_matched_costs.push({ make: object_array.id, cost_id: matchedData.id, current_cnt: matchedData.cnt, cost_value: value, cost_type: cost.cost_type, maxed: cost.cost_object_maxed });
-                    }
                 }
             }
             
             if (cost.cost_type === 'res') {
-                handleCosts(cost.cost_type, resourcesData, item, value, cost, object_array, global_matched_costs);
+                handleCosts(cost.cost_type, resourcesData, item, value, cost, object_array);
             }
             if (cost.cost_type !== 'res') {
-                handleCosts(cost.cost_type, objectElements, item, value, cost, object_array, global_matched_costs);
+                handleCosts(cost.cost_type, objectElements, item, value, cost, object_array);
             }
             if (cost.cost_type.includes('job')) {
-                handleCosts(cost.cost_type, tribeData, item, value, cost, object_array, global_matched_costs);
+                handleCosts(cost.cost_type, tribeData, item, value, cost, object_array);
             }
             if (cost.cost_type.includes('crafting')) {
-                handleCosts(cost.cost_type, resourcesData, item, value, cost, object_array, global_matched_costs);
+                handleCosts(cost.cost_type, resourcesData, item, value, cost, object_array);
             }
         } // end object_costs for loop
 
@@ -1129,11 +1123,8 @@ export function update_costList() {
             object_costs_container.innerHTML = label + printCosts;
             if (cost.available_for_purchase) {
                 add_button.className = 'ltgreentxt';
-
                 // Add a 'purchase-button' class
                 add_button.classList.add('purchase-button');
-                //object_array -- integrate costList data
-                add_button.setAttribute('object-array', JSON.stringify(object_array));
                 // click function handlePurchaseButtonClicks()
                 add_button.addEventListener('click', handlePurchaseButtonClicks);
             }
@@ -1144,16 +1135,10 @@ export function update_costList() {
                 add_button_max.className = 'ltred';
                 add_button_max.innerHTML = '***';
             }
-            
-            if (global_matched_costs.maxed) {
-                
-            }
-            
-            
         }
     }); // END: costList.forEach
 
-    // for 'job' objects only
+    // interval -> for 'job' objects only
     const jobElements = objectElements.filter(object => object.obj_type === 'job');
     const popTribes = tribeData.filter(tribe => tribe.uses === 'POP');
     
@@ -1165,11 +1150,31 @@ export function update_costList() {
         remove_button.innerHTML = '';
         // to completely hide button
         remove_button.style.visibility = 'hidden';
-        
+        let job_timer = document.getElementById(job.timer);
+        let curr_status = document.getElementById(job.curr_status);
+
         if (job.cnt > 0) {
             remove_button.className = 'ltgreentxt';
             remove_button.style.visibility = 'visible';
             remove_button.innerHTML = `${job.remove_button_lbl}`;
+            
+            // update decay timer
+            if (job.id === 'POP_BASIC_HUNTER') {
+                let object_used = objectElements.find(o => o.id === 'CRAFT_SPEAR');
+                if (object_used.total_decay_value > 0) {
+                    job_timer.className = 'ltgreentxt';
+                    job_timer.innerHTML = '(Hunting&nbsp;' + object_used.decay_timer + ')';
+                } 
+                if (object_used.total_decay_value <= 0) {
+                    job_timer.className = 'ltred';
+                    job_timer.innerHTML = `(Requires "${job.requires}")`;
+                }
+    
+            }
+        } else if (job_timer) {
+            job_timer.innerHTML = ``;
+        } else if (curr_status) {
+            curr_status.innerHTML = '';
         }
         
         remove_button.classList.add('job-remove-button');
@@ -1208,7 +1213,7 @@ export function handleJobRemoveButtonClicks(event) {
             tribeData[0].cnt += 1;
             
             // update object_count
-            object_count.innerHTML = `(${matchedObject.cnt})&nbsp`;
+            object_count.innerHTML = `&nbsp;(${matchedObject.cnt})&nbsp`;
             if (matchedObject.cnt === 0) {
                 object_count.innerHTML = '';
             }
@@ -1220,10 +1225,10 @@ export function handleJobRemoveButtonClicks(event) {
 export function handlePurchaseButtonClicks(event) {
     if (event.target.classList.contains('purchase-button')) {
         // Retrieve the associated data attribute (object_array)
-        var object_array = JSON.parse(event.target.getAttribute('object-array'));
+        let clicked_button = event.target.id;
+        let object_array = objectElements.find(o => o.id + '_add_button' === clicked_button);
 
         // *** update each object count and element from purchases
-
         const objectMod = objectElements.find(r => r.id === object_array.id);
         
         if (objectMod) {
@@ -1233,7 +1238,6 @@ export function handlePurchaseButtonClicks(event) {
                 if (objectMod.progress_value >= 100) {
                     objectMod.cnt += 1;
                     objectMod.progress_value = 0;
-                    //objectMod.total_decay_value += objectMod.decay_value + (objectMod.decay_value_start * objectMod.cnt);
                 }
                 let progress_value_DOM = document.getElementById(objectMod.progress_lbl);
                 if (objectMod.progress_value === 0) {
@@ -1256,6 +1260,8 @@ export function handlePurchaseButtonClicks(event) {
                 if (objectMod.id === 'POP_GATHERER') {
                     let gatherer = tribeData.find(t => t.id === 'POP_GATHERER');
                     gatherer.cnt += 1;
+                    let curr_status = document.getElementById(objectMod.curr_status);
+                    curr_status.innerHTML = '&nbsp;(Gathering &nbsp;&#8734;)';
                 }
                 // collectors
                 if (objectMod.id === 'POP_BASIC_COLLECTOR') {
@@ -1266,61 +1272,78 @@ export function handlePurchaseButtonClicks(event) {
                         }
                     });
                     collector.cnt += 1;
+                    let curr_status = document.getElementById(objectMod.curr_status);
+                    curr_status.innerHTML = '&nbsp;(Collecting &nbsp;&#8734;)';
                     
                 }
-                // cost creep value updates for 'upgrade'
-                if (objectMod.obj_type === 'upgrade') {
-                    // costList array .costs
-                    costList.forEach(cost => {
-                            for (let [item, value] of Object.entries(cost.costs)) {
-                                if (objectMod.id === cost.id && typeof value === 'number') {
-                                    cost.costs[item] = Math.round((objectMod.cost_creep * value) * 10) / 10;
-                                }
-                            }
-                    });
-                    // gather_increase
-                    let objectMod_res = resourcesData.find(r => 'GATHER_' + r.id === objectMod.id);
-                    objectMod_res.gather_rate += Math.round(objectMod.gather_increase * 10) / 10;
-                    // update 'upgrade' details label
-                    let gain_detail_id_DOM = document.getElementById(objectMod.gain_detail_id);
-                    objectMod_res.next_gather_rate += objectMod.gather_increase;
-                    gain_detail_id_DOM.innerHTML = ' Next: +' + (Math.round(objectMod_res.next_gather_rate * 10) / 10) + '&nbsp;' + objectMod_res.lbl.toLowerCase();
+                // altars
+                if (objectMod.id === 'BUILDING_PRIMITIVE_ALTAR') {
+                    
                 }
+
             }
-            // any other action
+            // after any action
             let object_count_DOM = document.getElementById(objectMod.object_count);
             if (object_count_DOM && objectMod.cnt !== 0) {
-                object_count_DOM.innerHTML = `(${objectMod.cnt})&nbsp`;
+                object_count_DOM.innerHTML = `&nbsp;(${objectMod.cnt})&nbsp`;
             } else {
                 object_count_DOM.innerHTML = '';
             }
         }
 
         // *** deduct costs from purchases
-        
-        global_matched_costs.forEach(data => {
+        costList.forEach(obj => {
 
-            const fetch_resourcesData = resourcesData.find(r => r.id === data.cost_id);
-            const fetch_tribeData = tribeData.find(t => t.id === data.cost_id);
-            const fetch_objectElements = objectElements.find(o => o.id === data.cost_id);
+            // Iterating over the 'costs' object within each object
+            Object.entries(obj.costs).forEach(([key, value]) => {
+                if (!key.includes('_lbl')) { // filter out keys containing '_lbl'
+    
+                    const fetch_tribeData = tribeData.find(t => t.id === key); // AVAILABLE_MEMBERS
+                    const fetch_objectElements = objectElements.find(o => o.id === obj.id);
+                    const fetch_resourcesData = resourcesData.find(o => o.id === key);
 
-            if (object_array.id === data.make) {
-                if (fetch_resourcesData) {
-                    fetch_resourcesData.cnt -= data.cost_value;
-                }
-                if (fetch_tribeData) {
-                    fetch_tribeData.cnt -= data.cost_value;
-                }
-                if (fetch_objectElements) {
-                    fetch_objectElements.cnt -= data.cost_value;
+                    if (fetch_resourcesData && object_array.id === obj.id) {
+                        fetch_resourcesData.cnt -= value;
+                    }
+                    if (fetch_tribeData && object_array.id === obj.id) {
+                        fetch_tribeData.cnt -= value;
+                    }
+                    
                     // for any items used, update cnt
-                    let fetch_object_count = document.getElementById(fetch_objectElements.object_count);
-                    fetch_object_count.innerHTML = `(${fetch_objectElements.cnt})&nbsp`;
-                }
-            }
+                    if (fetch_objectElements && object_array.id === obj.id) {
+                        let object_count_DOM = document.getElementById(fetch_objectElements.object_count);
+                        if (object_count_DOM && objectMod.cnt === 0) {
+                            object_count_DOM.innerHTML = ``;
+                        } else {
+                            object_count_DOM.innerHTML = `&nbsp;(${fetch_objectElements.cnt})&nbsp`;
+                        }                    
+                    }
+                } // end filter
+            });
         });
-    }
-}
+        
+        // cost creep value updates for 'upgrade'
+        if (objectMod && objectMod.obj_type === 'upgrade') {
+            // costList array .costs
+            costList.forEach(cost => {
+                for (let [item, value] of Object.entries(cost.costs)) {
+                    if (objectMod.id === cost.id && typeof value === 'number') {
+                        cost.costs[item] = Math.round((objectMod.cost_creep * value) * 10) / 10;
+                    }
+                }
+            });
+
+            // gather_increase
+            let objectMod_res = resourcesData.find(r => 'GATHER_' + r.id === objectMod.id);
+            objectMod_res.gather_rate += Math.round(objectMod.gather_increase * 10) / 10;
+            // update 'upgrade' details label
+            let gain_detail_id_DOM = document.getElementById(objectMod.gain_detail_id);
+            objectMod_res.next_gather_rate += objectMod.gather_increase;
+            gain_detail_id_DOM.innerHTML = ' Next: +' + (Math.round(objectMod_res.next_gather_rate * 10) / 10) + '&nbsp;' + objectMod_res.lbl.toLowerCase();
+        }
+
+    } // end click target
+} // end function
 
 export function update_food() {
 
