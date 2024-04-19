@@ -128,7 +128,7 @@ resourcesData[2].cnt = 5;
 // AVAILABLE_MEMBERS
 tribeData[0].cnt = 0;
 // CRAFT_SPEAR
-objectElements[14].cnt = 2;
+objectElements[15].cnt = 2;
 
 // test array
 //console.log(objectElements);
@@ -175,15 +175,15 @@ function start_interval(s) {
 
 // *** objectElements updates
 
-// CRAFT_SPEAR
 objectElements.forEach(objectMod => {
 
+    // CRAFT_SPEAR
     if (objectMod.id === 'CRAFT_SPEAR') {
 
         // update object_count
         let object_count = document.getElementById(objectMod.object_count);
         if (objectMod.cnt !== 0) {
-            object_count.innerHTML = `(${objectMod.cnt})&nbsp`;
+            object_count.innerHTML = `&nbsp;(${objectMod.cnt})&nbsp`;
         } else {
             object_count.innerHTML = '';
         }
@@ -233,6 +233,8 @@ objectElements.forEach(objectMod => {
             displayValue + ` (${minutes}:${seconds < 10 ? '0' : ''}${seconds})` + 
             `<br><span class="regtxt">TOTAL:</span> ` + 
             displayValue_total + ` (${minutes_total}:${seconds_total < 10 ? '0' : ''}${seconds_total})`;
+            // store total timer in array
+            objectMod.decay_timer = ` ${minutes_total}:${seconds_total < 10 ? '0' : ''}${seconds_total}`;
             
             if (objectMod.decay_value <= 0) {
                 objectMod.cnt -= 1;
@@ -249,12 +251,20 @@ objectElements.forEach(objectMod => {
         if (basic_hunter.cnt === 0) {
             decay_container.style.display = 'none';
         }
-    } 
+    }
+    // UPDATE extras: bonus
+    // for BUILDING_PRIMITIVE_ALTAR
+    let altar_obj = objectElements.find(o => o.id === 'BUILDING_PRIMITIVE_ALTAR');
+    if (altar_obj.cnt >= 5) {
+        let fetch_bonus_txt_id = document.getElementById(altar_obj.bonus_txt_id);
+        fetch_bonus_txt_id.className = 'ltgreentxt';
+        // WIP: add action
+    }
 });
 
         // RESOURCES DATA
         resourcesData.forEach(resource => {
-            // auto gatherers
+            // UPDATE auto gatherers
             let auto_lvl1_res = document.getElementById(resource.auto_lvl1_res);
             resourcesData.forEach(res => {
                 if (res.level === 1) {
@@ -266,9 +276,9 @@ objectElements.forEach(objectMod => {
                 }
             });
             
-            // update gather rate
+            // UPDATE gather rate
             document.getElementById(resource.gather_lbl).innerHTML = '<span class="ltgreentxt">&nbsp;+' + (Math.round(resource.gather_rate * 10) / 10) + ' ' + resource.lbl.toUpperCase();
-            // update resource counts
+            // UPDATE resource counts
             resource.cnt = Math.round(resource.cnt * 10) / 10;
             let fetched_cnt = document.getElementById(resource.res_cnt);
             let fetched_res_container = document.getElementById(resource.res_container);
@@ -283,11 +293,19 @@ objectElements.forEach(objectMod => {
                 fetched_cnt.innerHTML = resource.cnt.toFixed(1);
             }
             
-            // convert div (2)
-            if (resource.cnt >= resource.convert) {
-                document.getElementById(resource.con_id).innerHTML = '<span class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
-            } else {
-                document.getElementById(resource.con_id).innerHTML = '<span class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</span><span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resource.makes.toUpperCase() + ' ] </span';
+            // UPDATE convert div (2)
+            if (resource.makes !== 'none') {
+                let altar = objectElements.find(o => o.id === 'BUILDING_PRIMITIVE_ALTAR');
+                let made_res = resourcesData.find(r => r.id === resource.makes);
+                if (made_res && altar.cnt > 0 && made_res.level === 2) {
+                    resource.convert_gain = altar.cnt * resource.convert_mult;
+                }
+                // UPDATE output display
+                if (resource.cnt >= resource.convert) {
+                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div><hr>';
+                } else {
+                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div><hr>';            
+                }
             }
         });
         
@@ -304,8 +322,11 @@ start_interval(interval_normal);
 functions.showElementID('resources_sect_id');
 // display gather buttons
 functions.showElementID('gather_sect_id');
-// display convert -- WIP: hidden
-//functions.showElementID('convert_sect_id');
+// display convert buttons
+functions.showElementID('convert_sect_id');
 
 // start gather/convert function
 functions.start_gather(resourcesData);
+
+//Setup event listeners for each toggleButton
+functions.attachEventListeners();
