@@ -16,6 +16,10 @@ span {
 }
 
 /* BUTTONS */
+.button {
+    background-color: black;
+    color: #FFCB30;
+}
 .button_container {
     white-space: nowrap;
 }
