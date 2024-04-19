@@ -36,6 +36,10 @@ export function init_resourcesData() {
         resourcesIndex.con_lbl = 'convert_' + resourcesIndex.id;
         resourcesIndex.con_btn = 'convert_btn_' + resourcesIndex.id;
         resourcesIndex.convert = 10;
+        if (resourcesIndex.makes !== 'none') {
+            resourcesIndex.convert_mult = 2;
+            resourcesIndex.convert_gain = 1;
+        }
         resourcesIndex.cnt = 2000;
         resourcesIndex.max = 2000;
         resourcesIndex.res_container = 'res_container_' + resourcesIndex.id;
@@ -43,10 +47,10 @@ export function init_resourcesData() {
         resourcesIndex.res_cnt_lbl = 'res_cnt_lbl_' + resourcesIndex.id;
         resourcesIndex.res_cnt_max = 'res_cnt_max_' + resourcesIndex.id;
         const updates = {};
-        updates.print_gather = '<span class="button_orange">[ GATHER ' + resourcesIndex.lbl.toUpperCase() + ' ]';
+        updates.print_gather = '<button class="button_orange" style="background-color:#000000;">GATHER ' + resourcesIndex.lbl.toUpperCase() + '</button>';
         updates.print_gather2 = '<span class="ltgreentxt">&nbsp;+' + resourcesIndex.gather_rate + ' ' + resourcesIndex.lbl.toUpperCase();
-        updates.print_convert = '<span class="ltred">' + resourcesIndex.cnt + ' / ' + resourcesIndex.convert + ' ' + resourcesIndex.lbl + '</span>';
-        updates.print_convert2 = '<span class="button_orange">&nbsp;[ CONVERT TO +1 ' + resourcesIndex.makes.toUpperCase() + ' ] </span';
+        updates.print_convert = '<button class="button_orange">CONVERT 10 ' + resourcesIndex.lbl + '</button>&nbsp;+1 ' + resourcesIndex.makes.toUpperCase();
+        updates.print_convert2 = '<span class="ltred">' + resourcesIndex.cnt + ' / ' + resourcesIndex.convert + ' ' + resourcesIndex.lbl + '</span>';
         // Assign updates to resourcesIndex properties
         Object.assign(resourcesIndex, updates);
     }
@@ -163,6 +167,7 @@ export function init_costList() {
         { id: 'GATHER_BRUSH', costs: { 'LOGS': 10, 'ROCKS': 10, 'BRUSH': 10 }, cost_type: 'res' }, 
         { id: 'BUILDING_PRIMITIVE_SHELTER', costs: { 'TWIGS': 500, 'PEBBLES': 100 }, cost_type: 'res' }, 
         { id: 'BUILDING_BASIC_CRAFTING_STATION', costs: { 'TWIGS': 100, 'PEBBLES': 500, 'PINE_NEEDLES': 50 }, cost_type: 'res' }, 
+        { id: 'BUILDING_PRIMITIVE_ALTAR', costs: { 'TWIGS': 200, 'PEBBLES': 200, 'PINE_NEEDLES': 400 }, cost_type: 'res' }, 
         { id: 'POP_GATHERER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
         { id: 'POP_BASIC_HUNTER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, // OLD : cost_type: ['job', 'craft']
         { id: 'POP_BASIC_COLLECTOR', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
@@ -189,6 +194,19 @@ export function init_costList() {
     return costList;
 
 }
+// EXTRACT DATA
+/*
+costList.forEach(obj => {
+    console.log("ID: " + obj.id); // Accessing the 'id' property of each object
+    console.log("Cost Type: " + obj.cost_type); // Accessing the 'cost_type' property of each object
+            
+    // Iterating over the 'costs' object within each object
+    Object.entries(obj.costs).forEach(([key, value]) => {
+        console.log("Key: " + key); // Accessing the key of each key-value pair in 'costs'
+        console.log("Value: " + value); // Accessing the value of each key-value pair in 'costs'
+    });
+});
+*/
 
 export function init_objectElements() {
 
@@ -216,6 +234,14 @@ export function init_objectElements() {
             gain_lbl: 'CRAFT: Spears', 
             gain_detail_lbl: 'Crafted in parts.',
             },
+        { id: 'BUILDING_PRIMITIVE_ALTAR', lbl: 'Primitive Altar', obj_type: 'building',
+            title: 'Primitive Altar', 
+            desc: '...A place for rest and meditation. Allows your tribe to advance, by converting level 1 resources into something more useful.<br>...Each additional altar will double your resource conversion efficiency.',
+            gain_lbl: 'Doubles Resource Conversion Efficiency', 
+            gain_detail_lbl: 'Required for converting level 1 resources into level 2 resources (sticks, stones, and leaves).',
+            // extras
+            bonus_txt: '(LEVEL 5): Grants the ability to collect level 2 resources (sticks, stones, and leaves) diectly.',
+            },
         // static jobs
         { id: 'POP_GATHERER', lbl: 'Gatherer', obj_type: 'job',
             title: 'JOB: Basic Fruit Gatherer',
@@ -232,6 +258,7 @@ export function init_objectElements() {
             lvl: 2,
             // static
             consumes: {'CRAFT_SPEAR': 1},
+            requires: 'Spears',
             }, 
         { id: 'POP_BASIC_COLLECTOR', lbl: 'Basic Resource Collector', obj_type: 'job',
             title: 'JOB: Basic Collector',
@@ -243,7 +270,6 @@ export function init_objectElements() {
             auto_res: true,
             }, 
         // static crafted items
-        // WIP: needs to be destroyed over time or require resources/sec
         { id: 'CRAFT_SPEAR', lbl: 'Spear', obj_type: 'craft' }, 
         { id: 'CRAFT_SLING', lbl: 'Sling', obj_type: 'craft' }, 
         { id: 'CRAFT_BOW', lbl: 'Bow', obj_type: 'craft' },  
@@ -290,6 +316,8 @@ export function init_objectElements() {
             OE_Updates.remove_button = OE_Index.id + '_rem_button';
             OE_Updates.remove_button_lbl = 'REASSIGN';
             OE_Updates.consume_div = OE_Index.id + '_consume_div';
+            OE_Updates.timer = OE_Index.id + '_timer';
+            OE_Updates.curr_status = OE_Index.id + '_status';
             // tribeData[0].id === 'AVAILABLE_MEMBERS'
             // tribeData[0].cnt
         }
@@ -314,8 +342,12 @@ export function init_objectElements() {
             OE_Updates.total_decay_value = 0; // in code: .decay_value * .cnt
             OE_Updates.decay_started = false;
             OE_Updates.decay_timer = 0;
-
         }
+        // extra description ids
+        if (OE_Index.bonus_txt) {
+            OE_Updates.bonus_txt_id = OE_Index.id + 'bonus_txt_id';
+        }
+
         // Assign all updates to objectElements properties
         Object.assign(OE_Index, OE_Updates);
     }
