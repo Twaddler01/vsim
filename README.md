@@ -4,6 +4,8 @@ This is going to be an incremental / simulated gather-type "village" game with a
 # Link
 https://twaddler01.github.io/vsim/vsim.html
 # Updates
+* (04-18-2014)
+Moved 'toggle buttons' to individual function(s) -- fixed an issue where when creating new object array elements, it would cause the buttons to malfunction. Added a few new objects. Layout needs some adjusting to account for deleting and creating elements of to take up less memory than simply hiding them -- which is planned for future updates. Worked on CONVERT, which hopefully makes more sense now. Level 5 altars will be a trigger for new resources, eventually to be continually updated as the civilization advances. May end up renaming project to CivSim or something similar. Eventually, ages will advance into the future, beyond tribes into more urban environments. 
 * (04-10-2024)
 Some visual updates added to make things look a little cleaner. Ready to start adding more elements now that most of the initial coding is done.
 * (04-02-2024)
