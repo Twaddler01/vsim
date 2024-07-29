@@ -15,6 +15,7 @@ export function init_resourcesData() {
         { id: 'LOGS', lbl: 'Logs', level: 3, makes: 'none' },
         { id: 'ROCKS', lbl: 'Rocks', level: 3, makes: 'none' },
         { id: 'BRUSH', lbl: 'Brush', level: 3, makes: 'none' },
+        { id: 'KNOWLEDGE', lbl: 'Knowledge', level: 1, makes: 'none' },
     ];
 
     // Iterate over the array and set other variables dynamically
@@ -40,7 +41,11 @@ export function init_resourcesData() {
             resourcesIndex.convert_mult = 2;
             resourcesIndex.convert_gain = 1;
         }
-        resourcesIndex.cnt = 2000;
+        if (resourcesIndex.id !== 'KNOWLEDGE') {
+            resourcesIndex.cnt = 2000;
+        } else {
+            resourcesIndex.cnt = 0; // knowledge starts at 0
+        }
         resourcesIndex.max = 2000;
         resourcesIndex.res_container = 'res_container_' + resourcesIndex.id;
         resourcesIndex.res_cnt = 'res_cnt_' + resourcesIndex.id;
@@ -236,8 +241,8 @@ export function init_objectElements() {
             },
         { id: 'BUILDING_PRIMITIVE_ALTAR', lbl: 'Primitive Altar', obj_type: 'building',
             title: 'Primitive Altar', 
-            desc: '...A place for rest and meditation. Allows your tribe to advance, by converting level 1 resources into something more useful.<br>...Each additional altar will double your resource conversion efficiency.',
-            gain_lbl: 'Doubles Resource Conversion Efficiency', 
+            desc: '...A place for rest and meditation. Allows your tribe to advance, by converting level 1 resources into something more useful. Your tribe also gains 0.5 knowledge per second for research.<br>...Each additional altar will double your resource conversion efficiency.',
+            gain_lbl: 'Doubles Resource Conversion Efficiency<br>+0.5 Knowledge/s', 
             gain_detail_lbl: 'Required for converting level 1 resources into level 2 resources (sticks, stones, and leaves).',
             // extras
             bonus_txt: '(LEVEL 5): Grants the ability to collect level 2 resources (sticks, stones, and leaves) diectly.',
@@ -283,6 +288,7 @@ export function init_objectElements() {
         // *** all static ids ***
         // .id .lbl .obj_type
         // *** dynanic ids ***
+        OE_Updates.section_title = OE_Index.obj_type + '_sect_title';
         OE_Updates.section = OE_Index.obj_type + '_sect_id';
         OE_Updates.container_id = OE_Index.id + '_container';
         OE_Updates.first_line_div = OE_Index.id + '_first_line_div';
