@@ -76,22 +76,35 @@ exportHTMLButton.addEventListener("click", function () {
 });
 
 // *** main div sections ****
-// note: always hidden by default
+// SPECIAL: title, goals, tribe, resources, gather, convert
 
 functions.createNewSection('div', 'vsim_title', null, null, 'body');
 functions.createNewSection('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
-functions.createNewSection('div', 'tribe_sect_id', null, '<p class="divsections">TRIBE</p>', 'body');
+
+functions.createNewSection('div', 'tribe_sect_title', null, '<p class="divsections">TRIBE<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+functions.showElementID('tribe_sect_title');
+functions.createNewSection('div', 'tribe_sect_id', null, null, 'body');
+functions.section_collapse('tribe');
 functions.createNewSection('div', 'TRIBE_LEADER_obj', null, null, 'tribe_sect_id');
-functions.createNewSection('div', 'resources_sect_id', null, '<p class="divsections">RESOURCES</p>', 'body');
-functions.createNewSection('div', 'gather_sect_id', null, '<p class="divsections">GATHER</p>', 'body');
-functions.createNewSection('div', 'upgrade_sect_id', null, '<p class="divsections">UPGRADE</p><hr>', 'body');
-functions.createNewSection('div', 'building_sect_id', null, '<p class="divsections">BUILDINGS</p><hr>', 'body');
-functions.createNewSection('div', 'jobs_sect_id', null, '<p class="divsections">JOBS</p>', 'body');
-functions.createNewSection('div', 'convert_sect_id', null, '<p class="divsections">CONVERT</p>', 'body');
+
+functions.createNewSection('div', 'resources_sect_title', null, '<p class="divsections">RESOURCES<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+functions.showElementID('resources_sect_title');
+functions.createNewSection('div', 'resources_sect_id', null, null, 'body');
+functions.section_collapse('resources');
+
+functions.createNewSection('div', 'gather_sect_title', null, '<p class="divsections">GATHER<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+functions.showElementID('gather_sect_title');
+functions.createNewSection('div', 'gather_sect_id', null, null, 'body');
+functions.section_collapse('gather');
+
+functions.createNewSection('div', 'convert_sect_title', null, '<p class="divsections">CONVERT<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+functions.showElementID('convert_sect_title');
+functions.createNewSection('div', 'convert_sect_id', null, null, 'body');
 functions.createNewSection('div', 'convert_lvl1', null, null, 'convert_sect_id');
-functions.createNewSection('div', 'test_section', null, 'TEST', 'body');
-// let test_section = document.getElementById(test_section);
-// functions.showElementID('test_section');
+functions.section_collapse('convert');
+
+// **** other sections created in create_object(objectElements) ****
+// obj_type: upgrade, building, job, craft
 
 // **** title ****
 
@@ -103,8 +116,9 @@ vsim_title.appendChild(vsim_h1);
 // **** start ****
 
 functions.showElementID('vsim_title');
-functions.showElementID('tribe_sect_id');
+
 functions.update_tribe(true);
+
 functions.food_section(true);
 
 /*
@@ -130,15 +144,6 @@ tribeData[0].cnt = 0;
 // CRAFT_SPEAR
 objectElements[15].cnt = 2;
 
-// test array
-//console.log(objectElements);
-
-// test values
-/*let set_1 = tribeData.find(i => i.id === 'gatherer');
-set_1.cnt = 4;
-let set_2 = tribeData.find(i => i.id === 'basic_hunter');
-set_2.cnt = 7;*/
-
 /*
 // random food test
 // Call the selectFoodSource function to get the selected food source
@@ -157,7 +162,7 @@ let tooltipContent = functions.createCustomTooltipContent(); // Create a custom 
 // Associate tooltip with click_text element
 functions.addTooltip(fetch_food_div, tooltipContent);
 
-// *** CREATE OBJECTS BY SECTION
+// *** CREATE objectElements SECTIONS
 functions.create_object(objectElements);
 
 // global interval updates
@@ -285,10 +290,23 @@ objectElements.forEach(objectMod => {
             if (resource.cnt >= resource.max) {
                 resource.cnt = resource.max;
                 fetched_cnt.innerHTML = resource.max;
-                fetched_res_container.className = 'ltbluetxt_2';
+                if (resource.id !== 'KNOWLEDGE') {
+                    fetched_res_container.className = 'ltbluetxt';
+                    fetched_res_container.style.fontWeight = 'bold';
+                } 
+                if (resource.id === 'KNOWLEDGE') {
+                    fetched_res_container.className = 'pinktxt';
+                    fetched_res_container.style.fontWeight = 'bold';
+                }
             }
             if (resource.cnt < resource.max) {
-                fetched_res_container.className = 'ltbluetxt';
+                if (resource.id !== 'KNOWLEDGE') {
+                    fetched_res_container.className = 'ltbluetxt';
+                    fetched_res_container.style.fontWeight = 'normal';
+                } else {
+                    fetched_res_container.className = 'pinktxt';
+                    fetched_res_container.style.fontWeight = 'normal';
+                }
                 resource.cnt += resource.auto_lvl1_rate;
                 fetched_cnt.innerHTML = resource.cnt.toFixed(1);
             }
