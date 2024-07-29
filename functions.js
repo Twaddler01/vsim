@@ -641,14 +641,22 @@ export function create_object(obj_data) {
             object_name = object_name.slice(0, index).toUpperCase();
         }
 
-        // create section
-        createNewSection('div', array.section, null, `<p class="divsections">${object_name}</p><hr>`, 'body');
+        // create sections
+        // upgrade, building, job, craft
+        createNewSection('div', array.section_title, null, '<p class="divsections">' + object_name + '<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+        showElementID(array.section_title);
+        createNewSection('div', array.section, null, null, 'body');
+        
+        section_collapse(array.obj_type);
         showElementID(array.section);
+
         let fetch_section = document.getElementById(array.section);
 
         // container
-        newEl('container_id', 'div', fetch_section, array.container_id, null, null);
-        container_id.style.backgroundColor = "black";
+        if (fetch_section) {
+            newEl('container_id', 'div', fetch_section, array.container_id, null, null);
+            container_id.style.backgroundColor = "black";
+        }
 
         // define object first line
         newEl('first_line_div', 'div', container_id, array.first_line_div, null, null);
@@ -877,6 +885,10 @@ export function start_gather(obj_data) {
         let convert_section = document.getElementById('convert_sect_id');
     
         newEl('res_container', 'div', resources_section, array.res_container, null, null);
+        if (array.id === 'KNOWLEDGE')
+        {
+            res_container.className = 'pinktxt';
+        }
      
         // attach to res_container
         newEl('cur_resource_lbl_1', 'span', res_container, array.res_cnt_lbl, null, null);
@@ -894,7 +906,7 @@ export function start_gather(obj_data) {
         newEl('cur_resource_lbl_5', 'span', res_container, array.res_cnt_max, null, null);
         cur_resource_lbl_5.innerHTML = array.max;
         // WIP auto gatherers
-        newEl('cur_resource_lbl_6', 'span', res_container, array.auto_lvl1_res, null, null);
+        newEl('cur_resource_lbl_6', 'span', res_container, array.auto_lvl1_res, 'ltgreentxt', null);
         cur_resource_lbl_6.innerHTML = '&nbsp;(+0&nbsp;/s)';
     
         // hide all
@@ -904,7 +916,7 @@ export function start_gather(obj_data) {
         showElementID('res_container_TWIGS');
         showElementID('res_container_PEBBLES');
         showElementID('res_container_PINE_NEEDLES');
-    
+
         // show/hide elements individually
         // showElementID('resource_000');
     
@@ -917,6 +929,12 @@ export function start_gather(obj_data) {
         // append
         newEl('gatherSpan2', 'span', gath_container, array.gather_lbl, null, null);
         gatherSpan2.innerHTML = array.print_gather2;
+        // append
+        newEl('gatherSpan3', 'span', gath_container, null, null, null);
+        if (array.id !== 'KNOWLEDGE') {
+            gatherSpan3.innerHTML = "&nbsp;(level " + array.level + ")";
+        }
+
     
         // hide all
         hideElementID(array.gatherDiv);
@@ -943,6 +961,7 @@ export function start_gather(obj_data) {
         hideElementID('conDiv_LOGS');
         hideElementID('conDiv_ROCKS');
         hideElementID('conDiv_BRUSH');
+        hideElementID('conDiv_KNOWLEDGE');
     
         // show starting resources
         //showElementID('conDiv_STICKS');
@@ -1199,7 +1218,7 @@ export function handleJobRemoveButtonClicks(event) {
             // for gatherers only
             if (matchedObject.auto_res) {
                 resourcesData.forEach(resource => {
-                    if (resource.level === 1 && resource.auto_lvl1_rate !== 0) {
+                    if (resource.level === 1 && resource.auto_lvl1_rate !== 0 && resource.id !== 'KNOWLEDGE') {
                         resource.auto_lvl1_rate = 0;
                     }
                 });
@@ -1267,7 +1286,7 @@ export function handlePurchaseButtonClicks(event) {
                 if (objectMod.id === 'POP_BASIC_COLLECTOR') {
                     let collector = tribeData.find(t => t.id === 'POP_BASIC_COLLECTOR');
                     resourcesData.forEach(res => {
-                        if (res.level === 1) {
+                        if (res.level === 1 && res.id !== 'KNOWLEDGE') {
                             res.auto_lvl1_rate += 0.5;
                         }
                     });
@@ -1278,7 +1297,22 @@ export function handlePurchaseButtonClicks(event) {
                 }
                 // altars
                 if (objectMod.id === 'BUILDING_PRIMITIVE_ALTAR') {
-                    
+                    let knowledge_res = resourcesData.find(r => r.id === 'KNOWLEDGE');
+                    showElementID('res_container_KNOWLEDGE');
+                    knowledge_res.auto_lvl1_rate += 0.5;
+                    // WIP
+                    if (objectMod.cnt === 5) { // default: 5
+                        showElementID('res_container_STICKS');
+                        showElementID('res_container_STONES');
+                        showElementID('res_container_LEAVES');
+                        showElementID('gather_div_STICKS');
+                        showElementID('gather_div_STONES');
+                        showElementID('gather_div_LEAVES');
+                        //hideElementID('gather_div_TWIGS');
+                        //hideElementID('gather_div_PEBBLES');
+                        //hideElementID('gather_div_PINE_NEEDLES');
+
+                    }
                 }
 
             }
@@ -1401,7 +1435,7 @@ export function update_food() {
         
         fetch_production_totals.innerHTML = '+' + foodResource[0].gain;
 
-        fetch_food_dep_live.innerHTML = foodResource[0].food_dep;
+        fetch_food_dep_live.innerHTML = Math.round(foodResource[0].food_dep * 10) / 10;
         
         population_cnt.innerHTML = '(' + fetch_TOTAL_POPULATION.cnt + '):&nbsp;';
         
@@ -1415,6 +1449,26 @@ export function update_food() {
             fetch_totals_live.className = 'ltred';
             add_plus = '';
         }
-        fetch_totals_live.innerHTML = '<hr>RATE/S:&nbsp;' + add_plus + Math.round(foodResource[0].net_difference * 10) / 10;
+        fetch_totals_live.innerHTML = '<hr>CURRENT RATE/S:&nbsp;' + add_plus + Math.round(foodResource[0].net_difference * 10) / 10;
+    }
+}
+
+// show or hide sections
+export function section_collapse(id) {
+// on click
+    let section = id + '_sect_id';
+    let section_title = id + '_sect_title';
+    let fetch_section = document.getElementById(section);
+    let fetch_section_title = document.getElementById(section_title);
+    if (fetch_section_title) {
+        fetch_section_title.addEventListener('click', function() {
+            if (fetch_section.style.display === "none") {
+                fetch_section.style.display = "block";
+                fetch_section_title.innerHTML = '<p class="divsections">' + id.toUpperCase() + '<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>';
+            } else {
+                fetch_section.style.display = "none";
+                fetch_section_title.innerHTML = '<p class="divsections">' + id.toUpperCase() + '<span class="regtxt">&nbsp;[&nbsp;+&nbsp;]</span></p>';
+            }
+        });
     }
 }
