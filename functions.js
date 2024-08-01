@@ -403,7 +403,7 @@ export function goalCompleted(goalId) {
     // Find the goal in the goalsData array based on its ID
     var goalToUpdate = goalsData.find(goal => goal.id === goalId);
 
-    if (goalToUpdate && !goalToUpdate.goal_req_met) {
+    if (goalToUpdate && !goalToUpdate.goal_req_met && goalToUpdate.active_goal === true) {
         // Update the goal_req_met property
         goalToUpdate.goal_req_met = true;
         
@@ -482,9 +482,13 @@ export function goalCompleted(goalId) {
                     showElementID('upgrade_sect_title');
                     showElementID('upgrade_sect_id');
                     showElementID('gather_div_PEBBLES');
-                    // hide these 2 upgrades
+                    // hide this upgrade for now
                     hideElementID('GATHER_PINE_NEEDLES_container');
                     break;
+                case 'goal_3':
+                    ////
+                    let res_twigs = resourcesData.find(r => r.id === 'TWIGS');
+                    res_twigs.auto_lvl1_rate += 2;
             }
         });
     }
@@ -519,7 +523,7 @@ export function sub_goalCompleted(goalID, sub_goal) {
             }
         } else {
             // sub count = 2
-            if (!fetched_goalsData.goal_req_met && fetched_goalsData.sub_status === 'done' && fetched_goalsData.sub2_status === 'done' && !fetched_goalsData.sub3_status) {
+            if (!fetched_goalsData.goal_req_met && fetched_goalsData.sub_status === 'done' && fetched_goalsData.sub2_status === 'done') {
                 // mark entire goal complete
                 goalCompleted(fetched_goalsData.id);
             }
@@ -1098,16 +1102,29 @@ export function start_gather(obj_data) {
                         update_cnt.innerHTML = number_format((Math.round(array.cnt * 10) / 10).toFixed(1));
                         // goal_1
                         let goal_desc = document.getElementById(goalsData[1].desc_id);
-                        let goal_cnt = resourcesData.find(res => res.id === 'TWIGS')
-                        goal_desc.innerHTML = '[*] Gather 200 Twigs. (' + Math.round((goal_cnt.cnt * 10)/ 10) + '&nbsp;/&nbsp;200&nbsp;twigs gathered)';
-                        if (goal_cnt.cnt >= 200) {
+                        let goal_cnt = resourcesData.find(res => res.id === 'TWIGS');
+                        let fetched_goal_1 = goalsData.find(goal => goal.id === 'goal_1');
+                        if (!fetched_goal_1.goal_req_met) {
+                            goal_desc.innerHTML = '[*] Gather 200 Twigs. (' + Math.round((goal_cnt.cnt * 10)/ 10) + '&nbsp;/&nbsp;200&nbsp;twigs gathered)';
+                        }
+                        if (fetched_goal_1.active_goal === true && goal_cnt.cnt >= 200 && !fetched_goal_1.goal_req_met) {
                             goal_desc.innerHTML = '[*] Gather 200 Twigs. (200&nbsp;/&nbsp;200&nbsp;twigs gathered)';
                             goalCompleted('goal_1');
                         }
                         // goal_2
                         let goal2_cnt = resourcesData.find(res => res.id === 'PEBBLES');
-                        if (goal2_cnt.cnt >= 20) {
+                        let fetched_goal_2 = goalsData.find(goal => goal.id === 'goal_2');
+                        if (fetched_goal_2.active_goal === true && goal2_cnt.cnt >= 20 && !fetched_goal_2.goal_req_met) { //temp cnt shelter cost
                             sub_goalCompleted('goal_2', 'sub3');
+                        }
+                        // goal_3
+                        let goal3_cnt = resourcesData.find(res => res.id === 'TWIGS');
+                        if (goal3_cnt.cnt >= 250 ) { //temp cnt 2000
+                            let fetched_goal_3 = goalsData.find(goal => goal.id === 'goal_3');
+                            if (fetched_goal_3.active_goal === true && !fetched_goal_3.goal_req_met) {
+                                sub_goalCompleted('goal_3', 'sub');
+                                sub_goalCompleted('goal_3', 'sub2');
+                            }
                         }
                     }
                     break;
@@ -1381,7 +1398,7 @@ export function handlePurchaseButtonClicks(event) {
                 }
             } else {
                 objectMod.cnt += 1;
-                // upgrades ////
+                // upgrades
                 if (objectMod.obj_type === 'upgrade') {
                     // goal_2
                     if (objectMod.id === 'GATHER_TWIGS' && objectMod.cnt >= 1) { // 5
