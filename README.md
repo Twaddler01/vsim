@@ -9,7 +9,9 @@ https://twaddler01.github.io/vsim/vsim.html
 * Added more visual enhancements.
 * Added a few working goals for progression. Needs modifications for 'sub' goals and for completion of parts, if required.
 * Cleaned up old code.
+
 (07-29-2024)
+
 * Added collapsible sections.
 * Minor modifications to clear up confusion in code.
 * Added KNOWLEDGE stat.
