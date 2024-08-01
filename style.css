@@ -1,4 +1,4 @@
-/* style.css 07-29-2024 */
+/* style.css 08-01-2024 */
 body {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none;   /* Safari */
@@ -44,6 +44,26 @@ span {
     text-decoration: underline;
     padding: 10px;
 }
+.divsections_no_ul {
+    color: yellow;
+    font-size: 18px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    padding-left: 0px;
+}
+.section_title {
+    background-color: #1A1A1A;
+    border-top: solid;
+    border-bottom: solid;
+}
+.section_text {
+    box-sizing: border-box;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    padding-left: 0px;
+}
 .light_small {
     font-size: 12px;
     color: #CCCCCC;
@@ -59,6 +79,10 @@ span {
 }
 .ltgreentxt {
     color: #4EF591;
+}
+.ltgreentxt_b {
+    color: #4EF591;
+    font-weight: bold;
 }
 .pinktxt {
     color: #FFB3FC;
