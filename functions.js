@@ -380,13 +380,20 @@ export function startGoals() {
             sub_goal2.innerHTML = goal.sub2;
         }
         
+        if (goal.sub3) {
+            newEl('sub_goal3', 'p', container, goal.sub_id3, null, null);
+            hideElementID(goal.sub_id3);
+            sub_goal3.className = 'light_small';
+            sub_goal3.innerHTML = goal.sub3;
+        }
+        
         newEl('next_goal', 'p', container, goal.next_goal_id, null, null);
 
         if (goal.active_goal === true) {
             showElementID(goal.desc_id);
             showElementID(goal.sub_id);
         }
-console.log(goal);
+//console.log(goal);
     });
 }
 
@@ -396,7 +403,7 @@ export function goalCompleted(goalId) {
     // Find the goal in the goalsData array based on its ID
     var goalToUpdate = goalsData.find(goal => goal.id === goalId);
 
-    if (goalToUpdate) {
+    if (goalToUpdate && !goalToUpdate.goal_req_met) {
         // Update the goal_req_met property
         goalToUpdate.goal_req_met = true;
         
@@ -421,13 +428,7 @@ export function goalCompleted(goalId) {
         let sub_goal = document.getElementById(goalId + '_sub');
         sub_goal.style.fontWeight = 'normal';
         sub_goal.classList.add('ltgreentxt');
-        sub_goal.innerHTML = goalToUpdate.sub;
-        
-        let sub_goal2 = document.getElementById(goalId + '_sub2');
-        if (sub_goal2) {
-            // needs to Integrate sub goals
-            console.log(sub_goal2);
-        }
+        sub_goal.innerHTML = '&#10003;&nbsp;' + goalToUpdate.sub;
 
         let next_goal = document.getElementById(goalId + '_next');
         next_goal.innerHTML = '<button class="button_orange" style="background-color:#000000;">NEXT GOAL</button>';
@@ -457,11 +458,16 @@ export function goalCompleted(goalId) {
             hideElementID(goalToUpdate.complete_id);
             hideElementID(goalToUpdate.sub_id);
             hideElementID(goalToUpdate.sub_id2);
+            hideElementID(goalToUpdate.sub_id3);
             hideElementID(goalToUpdate.next_goal_id);
             showElementID(next_GoalToUpdate.id + '_desc');
             showElementID(next_GoalToUpdate.id + '_sub');
+            
             if (next_GoalToUpdate.id + '_sub2') {
                 showElementID(next_GoalToUpdate.id + '_sub2');
+            }
+            if (next_GoalToUpdate.id + '_sub3') {
+                showElementID(next_GoalToUpdate.id + '_sub3');
             }
             
             // extra actions after goal completion
@@ -481,6 +487,45 @@ export function goalCompleted(goalId) {
                     break;
             }
         });
+    }
+}
+
+// marking sub goals complete
+// EXAMPLE: sub_goalCompleted('goal_2', 'sub');
+export function sub_goalCompleted(goalID, sub_goal) {
+
+    let fetched_goalsData = goalsData.find(goal => goal.id === goalID);
+
+    let fetched_element = document.getElementById(goalID + '_' + sub_goal); // 
+    let contents = fetched_element.innerHTML;
+    let status_id = sub_goal + '_status';
+
+    if (fetched_element && fetched_goalsData[status_id] === 'pending') {
+        fetched_element.style.fontWeight = 'normal';
+        fetched_element.classList.add('ltgreentxt');
+        fetched_element.innerHTML = '&#10003;&nbsp;' + contents;
+        // mark sub goal as done in array
+        // using [] to specify string for array.sub_status
+        fetched_goalsData[status_id] = 'done';
+    }
+    
+    if (fetched_goalsData.sub2_status) {
+        //TEST max sub 3
+        if (fetched_goalsData.sub3_status) {
+            // sub count = 3;
+            if (!fetched_goalsData.goal_req_met && fetched_goalsData.sub_status === 'done' && fetched_goalsData.sub2_status === 'done' && fetched_goalsData.sub3_status === 'done') {
+                // mark entire goal complete
+                goalCompleted(fetched_goalsData.id);
+            }
+        } else {
+            // sub count = 2
+            if (!fetched_goalsData.goal_req_met && fetched_goalsData.sub_status === 'done' && fetched_goalsData.sub2_status === 'done' && !fetched_goalsData.sub3_status) {
+                // mark entire goal complete
+                goalCompleted(fetched_goalsData.id);
+            }
+
+        }
+        
     }
 }
 
@@ -1051,13 +1096,18 @@ export function start_gather(obj_data) {
                     if (array.cnt < array.max) {
                         array.cnt += array.gather_rate;
                         update_cnt.innerHTML = number_format((Math.round(array.cnt * 10) / 10).toFixed(1));
-                        // goal #1
+                        // goal_1
                         let goal_desc = document.getElementById(goalsData[1].desc_id);
                         let goal_cnt = resourcesData.find(res => res.id === 'TWIGS')
                         goal_desc.innerHTML = '[*] Gather 200 Twigs. (' + Math.round((goal_cnt.cnt * 10)/ 10) + '&nbsp;/&nbsp;200&nbsp;twigs gathered)';
                         if (goal_cnt.cnt >= 200) {
                             goal_desc.innerHTML = '[*] Gather 200 Twigs. (200&nbsp;/&nbsp;200&nbsp;twigs gathered)';
                             goalCompleted('goal_1');
+                        }
+                        // goal_2
+                        let goal2_cnt = resourcesData.find(res => res.id === 'PEBBLES');
+                        if (goal2_cnt.cnt >= 20) {
+                            sub_goalCompleted('goal_2', 'sub3');
                         }
                     }
                     break;
@@ -1331,6 +1381,16 @@ export function handlePurchaseButtonClicks(event) {
                 }
             } else {
                 objectMod.cnt += 1;
+                // upgrades ////
+                if (objectMod.obj_type === 'upgrade') {
+                    // goal_2
+                    if (objectMod.id === 'GATHER_TWIGS' && objectMod.cnt >= 1) { // 5
+                        sub_goalCompleted('goal_2', 'sub');
+                    }
+                    if (objectMod.id === 'GATHER_PEBBLES' && objectMod.cnt >= 1) { // 5
+                        sub_goalCompleted('goal_2', 'sub2');
+                    }
+                }
                 // AVAILABLE_MEMBERS only
                 if (objectMod.makes === 'AVAILABLE_MEMBERS') {
                     tribeData[0].cnt += 1;
