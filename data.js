@@ -43,7 +43,7 @@ export function init_resourcesData() {
         }
         if (resourcesIndex.id !== 'KNOWLEDGE' && resourcesIndex.level === 1) {
             resourcesIndex.cnt = 0;
-            resourcesIndex.hidden = true; ////
+            resourcesIndex.hidden = true;
         } else {
             resourcesIndex.cnt = 0; // higher levels start at 0
             resourcesIndex.hidden = true;
@@ -148,13 +148,17 @@ export function init_goalsData() {
         { id: 'goal_2', desc: '[*] Build a shelter to recruit a new tribe member.', 
         sub: '1. Upgrade TWIGS collection to level 5.', 
         sub2: '2. Upgrade PEBBLES collection to level 5.', 
-        sub3: '3. Collect enough TWIGS and PEBBLES to build a shelter.', 
-        goal_req_met: false, active_goal: false, 
+        sub3: '3. Collect enough TWIGS and PEBBLES to build a shelter.', goal_req_met: false, active_goal: false, 
         sub_status: 'pending', // for multiple sub goals only
         sub2_status: 'pending', // either 'pending' or 'done'
         sub3_status: 'pending' }, 
-        { id: 'goal_3', desc: '[*] Convert 10 of each resource to gather new resources.', 
-        sub: 'SUB_GOAL', goal_req_met: false, active_goal: false },
+        { id: 'goal_3', desc: '[*] Keep upgrading TWIGS collection to more efficiently gather them.', 
+        sub: '1. Gather 2000 TWIGS. ', goal_req_met: false, active_goal: false, 
+        sub2: '+AWARD: Receive a gathering bonus from the Tribe Leader.',
+        sub_status: 'pending',
+        sub2_status: 'pending' }, 
+        { id: 'goal_4', desc: 'No active goals...', 
+        sub: '', goal_req_met: false, active_goal: false },
     ];
 
     for (let i = 0; i < goalsData.length; i++) {
