@@ -60,41 +60,6 @@ export function hideElementID(elementId) {
     }
 }
 
-// WIP: for progression
-// Add an event listener to the element
-export function addClickEvent(elementId) {
-    var element = document.getElementById(elementId);
-
-    if (element) {
-        element.addEventListener('click', function() {
-            // Handle different tasks based on the element ID
-            switch (elementId) {
-                case 'add_active':
-                    // Task for 'obj_add_active'
-                    goalCompleted(0);
-                    removeElement('obj_TRIBE_LEADER_init');
-                    //hide tribe for until call
-                    hideElementID('tribe_sect_id');
-                    wait(0, function() { // 3
-                        // start
-                        update_tribe(true);
-                        // check if goal alteady completed
-                        const goalIdCheck = 1;
-                        const check_goal = goalsData.find(goal => goal.id === goalIdCheck);
-                        if (check_goal && !check_goal.goal_req_met) {
-                            createGoal(1);
-                        }
-                    });
-                    break;
-                // Add more cases for other element IDs
-                default:
-                    console.log('No specific task defined for element with ID ' + elementId);
-                    break;
-            }
-        });
-    }
-}
-
 // TRIBE SECTION
 export function update_tribe(tribe_first_run) {
     
@@ -107,6 +72,13 @@ export function update_tribe(tribe_first_run) {
     // first run
     if (tribe_section && tribe_first_run === true) {
 
+        newEl('first_goal', 'div', tribe_section, 'first_goal', null, null);
+        first_goal.innerHTML = '<button class="button_orange" style="background-color:#000000;">BECOME TRIBE LEADER</button>';
+        first_goal.addEventListener('click', function() {
+            goalCompleted('goal_0');
+            tribe_section.removeChild(first_goal);
+//});
+// create tribe data after goal_0
         tribeData.forEach(tribe => {
             let new_div = document.createElement('div');
             tribe_section.appendChild(new_div);
@@ -115,6 +87,9 @@ export function update_tribe(tribe_first_run) {
                 new_div.className = 'button_orange';
             } else {
                 new_div.className = 'ltbluetxt_2';
+            }
+            if (tribe.id === 'AVAILABLE_MEMBERS') {
+                new_div.style.fontWeight = 'bold';
             }
 
             let new_lbl = document.createElement('span');
@@ -126,6 +101,9 @@ export function update_tribe(tribe_first_run) {
             new_cnt.id = tribe.eid;
             new_cnt.innerHTML = tribe.cnt;
         });
+        
+});
+
         
         tribe_first_run = false;
     }
@@ -227,31 +205,24 @@ export function food_section(food_first_run) {
         food_level.innerHTML = '&nbsp;(level 1)&nbsp';
         // gather rate
         food.gather_rate = food.gather_rate * foodSources[0].multiplier;
-            
-        // level 1 rates -- WIP: TOOLTIP
-        /*
-        gather_food_gain.innerHTML = 'FOOD:';
-        let fetch_foodSources_1 = foodSources.filter(f => f.lvl === 1);
-        let gain_label = '';
-        fetch_foodSources_1.forEach(foodSource => {
-            let source = ` +${foodSource.multiplier} ${foodSource.lbl.toUpperCase()}`;
-            gain_label += `${source} /`;
-        });
-        gather_food_gain.innerHTML = gain_label.slice(0, -1);
-        */
+
         gather_food_gain.innerHTML = '+0.8 / +1.0 / +1.1 FOOD';
         
         // click event
         gather_food_btn.addEventListener('click', async function() {
             // Call the selectFoodSource function to get the selected food source
-            const selectedFoodSource = await selectFoodSource(1); // process first for sync
+            let selectedFoodSource = await selectFoodSource(1); // process first for sync
+            // for upgraded to level 2
+            if (food.selected_food_level === 2) {
+                selectedFoodSource = await selectFoodSource(2); // process first for sync
+            }
             // food gather rate adjustment to multiplier
             updated_gather_rate = await food.gather_rate * selectedFoodSource.multiplier;
 
             food.cnt = food.cnt + updated_gather_rate; // food.gather_rate
             if (food.cnt >= food.max) {
                 food.cnt = food.max;
-                food_section.className = 'ltbluetxt_2';
+                food_section.style.fontWeight = 'bold';
             }
             food_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
         });
@@ -278,11 +249,17 @@ export function food_section(food_first_run) {
         food.loss = food_dep + food_source.spoil;
         food.gain = TRIBE_LEADER.cnt * TRIBE_LEADER.food_gain; // 20% from TRIBE_LEADER
         food.net_difference = Math.round(food.net_difference * 10) / 10;
+
         if (food.cnt > 0) {
             let add_plus = '+';
             food.cnt = food.cnt + food.net_difference;
+            
+            let fetch_food_section = document.getElementById('food_section');
             if (food.cnt >= food.max) {
                 food.cnt = food.max;
+                fetch_food_section.style.fontWeight = 'bold';
+            } else {
+                fetch_food_section.style.fontWeight = 'normal';
             }
             fetch_cnt.innerHTML = Math.round(food.cnt * 10) / 10;
             food_loss.className = 'ltgreentxt';
@@ -290,7 +267,7 @@ export function food_section(food_first_run) {
                 food_loss.className = 'ltred';
                 add_plus = '';
             }
-            if (food.cnt <= 0) {
+            if (food.cnt < 0) {
                 food.cnt = 0;
                 fetch_cnt.innerHTML = 0;
                 food_loss.innerHTML = '';
@@ -298,6 +275,9 @@ export function food_section(food_first_run) {
                 food_loss.innerHTML = '&nbsp;(' + add_plus + food.net_difference + '&nbsp;/&nbsp;s)';
                 if (food.cnt >= food.max) {
                     food.cnt = food.max;
+                    food_loss.className = 'button_faded';
+                }
+                if (food.net_difference === 0) {
                     food_loss.innerHTML = '';
                 }
             }
@@ -370,29 +350,44 @@ export function removeElement(elementId) {
     }
 }
 
-// GOALS
-export function createGoal(goal_number) {
+//// WIP GOALS
+// case 'gather':
+export function startGoals() {
     var goal_section = document.getElementById('goals_sect_id');
-    
-    // first run
-    if (goal_section.style.display === 'none') {
-        goal_section.style.display = 'block';
-    }
-    
-    // Reset existing content before adding new goal
-    goal_section.innerHTML = '<p class="pinktxt">Goals:</p>';
-    var goalNumber = goalsData.find(goal => goal.id === goal_number);
 
-    if (goalNumber && !goalNumber.goal_req_met) {
-        var newGoal = document.createElement('div');
-        newGoal.id = 'goal_' + goalNumber.id;
-    
-        var goalContent_desc = document.createElement('p');
-        goalContent_desc.textContent = goalNumber.desc;
+    goalsData.forEach(goal => {
+        
+        newEl('container', 'div', goal_section, goal.container_id, null, null);
+        
+        newEl('goal_desc', 'span', container, goal.desc_id, null, null);
+        goal_desc.innerHTML = goal.desc;
+        hideElementID(goal.desc_id);
+        //attach
+        newEl('complete_lbl', 'span', goal_desc, goal.complete_id, null, null);
+        complete_lbl.style.display = 'none';
+        complete_lbl.className = 'ltgreentxt_b';
+        complete_lbl.innerHTML = '&nbsp;(&#10003;&nbsp;COMPLETE)';
 
-        newGoal.appendChild(goalContent_desc);
-        goal_section.appendChild(newGoal);
-    }
+        newEl('sub_goal', 'p', container, goal.sub_id, null, null);
+        hideElementID(goal.sub_id);
+        sub_goal.className = 'light_small';
+        sub_goal.innerHTML = goal.sub;
+
+        if (goal.sub2) {
+            newEl('sub_goal2', 'p', container, goal.sub_id2, null, null);
+            hideElementID(goal.sub_id2);
+            sub_goal2.className = 'light_small';
+            sub_goal2.innerHTML = goal.sub2;
+        }
+        
+        newEl('next_goal', 'p', container, goal.next_goal_id, null, null);
+
+        if (goal.active_goal === true) {
+            showElementID(goal.desc_id);
+            showElementID(goal.sub_id);
+        }
+console.log(goal);
+    });
 }
 
 export function goalCompleted(goalId) {
@@ -404,33 +399,88 @@ export function goalCompleted(goalId) {
     if (goalToUpdate) {
         // Update the goal_req_met property
         goalToUpdate.goal_req_met = true;
-
-        // Create a new goal element with the updated description and styling
-        var updatedGoalElement = document.createElement('div');
-        updatedGoalElement.id = 'goal_' + goalToUpdate.id;
-
-        var goalContent_desc = document.createElement('p');
-        goalContent_desc.textContent = goalToUpdate.desc;
-
-        updatedGoalElement.appendChild(goalContent_desc);
-
-        goalContent_desc.classList.add('crossed-out');
+        
+        let fetched_goal_id = document.getElementById(goalId + '_container');
+        fetched_goal_id.style.fontWeight = 'bold';
+        fetched_goal_id.classList.add('ltgreentxt');
+        
+        let fetched_desc_id = document.getElementById(goalToUpdate.desc_id);
 
         // Add a new paragraph with the word "COMPLETE" and a class
-        var completeParagraph = document.createElement('p');
-        completeParagraph.textContent = ' (COMPLETE)';
-        completeParagraph.classList.add('ltgreentxt'); // Add your class name here
-        completeParagraph.style.display = 'inline';
-        updatedGoalElement.appendChild(completeParagraph);
-
-        // Replace the existing goal element in the DOM
-        var existingGoalElement = document.getElementById('goal_' + goalId);
-        if (existingGoalElement) {
-            existingGoalElement.replaceWith(updatedGoalElement);
+        let complete_lbl = document.getElementById(goalToUpdate.complete_id);
+        if (complete_lbl) {
+            complete_lbl.style.display = 'inline';
         } else {
-            // If the existing goal element is not found, append the updated one
-            goal_section.appendChild(updatedGoalElement);
+            complete_lbl = document.createElement('span');
+            complete_lbl.id = goalToUpdate.complete_id;
+            complete_lbl.className = 'ltgreentxt_b';
+            complete_lbl.innerHTML = '&nbsp;(&#10003;&nbsp;COMPLETE)';
+            fetched_desc_id.appendChild(complete_lbl);
         }
+
+        let sub_goal = document.getElementById(goalId + '_sub');
+        sub_goal.style.fontWeight = 'normal';
+        sub_goal.classList.add('ltgreentxt');
+        sub_goal.innerHTML = goalToUpdate.sub;
+        
+        let sub_goal2 = document.getElementById(goalId + '_sub2');
+        if (sub_goal2) {
+            // needs to Integrate sub goals
+            console.log(sub_goal2);
+        }
+
+        let next_goal = document.getElementById(goalId + '_next');
+        next_goal.innerHTML = '<button class="button_orange" style="background-color:#000000;">NEXT GOAL</button>';
+        
+        //wait(3, function() {
+            
+        //});
+
+        next_goal.addEventListener('click', function() {
+            
+            goalToUpdate.active_goal = false;
+            
+            let current_index = goalToUpdate.id;
+            //console.log('current_index: ' + current_index);
+
+            let current_number = parseInt(current_index.split('_')[1]);
+            let next_number = current_number + 1;
+            let next_index = 'goal_' + next_number;
+            //console.log('next_index: ' + next_index);
+
+            let next_GoalToUpdate = goalsData.find(goal => goal.id === next_index);
+
+            next_GoalToUpdate.active_goal = true;
+            
+            // hide previous goal data, show new goal
+            hideElementID(goalToUpdate.desc_id);
+            hideElementID(goalToUpdate.complete_id);
+            hideElementID(goalToUpdate.sub_id);
+            hideElementID(goalToUpdate.sub_id2);
+            hideElementID(goalToUpdate.next_goal_id);
+            showElementID(next_GoalToUpdate.id + '_desc');
+            showElementID(next_GoalToUpdate.id + '_sub');
+            if (next_GoalToUpdate.id + '_sub2') {
+                showElementID(next_GoalToUpdate.id + '_sub2');
+            }
+            
+            // extra actions after goal completion
+            switch (current_index) {
+                case 'goal_0':
+                    showElementID('gather_sect_title');
+                    showElementID('gather_sect_id');
+                    showElementID('resources_sect_title');
+                    showElementID('resources_sect_id');
+                    break;
+                case 'goal_1':
+                    showElementID('upgrade_sect_title');
+                    showElementID('upgrade_sect_id');
+                    showElementID('gather_div_PEBBLES');
+                    // hide these 2 upgrades
+                    hideElementID('GATHER_PINE_NEEDLES_container');
+                    break;
+            }
+        });
     }
 }
 
@@ -643,19 +693,23 @@ export function create_object(obj_data) {
 
         // create sections
         // upgrade, building, job, craft
-        createNewSection('div', array.section_title, null, '<p class="divsections">' + object_name + '<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
-        showElementID(array.section_title);
-        createNewSection('div', array.section, null, null, 'body');
+        createNewSection('div', array.section_title, 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">' + object_name + '</span></p>', 'body');
+        //showElementID(array.section_title);
+        createNewSection('div', array.section, 'section_text', null, 'body');
         
         section_collapse(array.obj_type);
-        showElementID(array.section);
-
+        //showElementID(array.section);
+        
         let fetch_section = document.getElementById(array.section);
-
+        
         // container
         if (fetch_section) {
             newEl('container_id', 'div', fetch_section, array.container_id, null, null);
             container_id.style.backgroundColor = "black";
+            // only show level 1 upgrades initially
+            if (array.obj_type === 'upgrade' && array.level !== 1) {
+                hideElementID(array.container_id);
+            }
         }
 
         // define object first line
@@ -744,14 +798,19 @@ export function create_object(obj_data) {
             }
         }
 
-        // separator & spacer
-        newEl('hr_spacer', 'div', container_id, null, null, null);
-        hr_spacer.innerHTML = '<hr>';
-
         // *** details start
         // gain label
         newEl('gain_lbl', 'div', details_div, array.gain_lbl, 'ltgreentxt', null);
         gain_lbl.innerHTML = array.gain_lbl;
+
+        // calc gain_lbl
+        if (array.id === 'BUILDING_PRIMITIVE_STORAGE') {
+            let old_max = resourcesData[0].max; // use TWIGS as reference
+            let new_max = old_max + (old_max * 0.5);
+            new_max = Math.round(new_max * 10) / 10;
+            gain_lbl.innerHTML = '+50&percnt; maximum resource capacity (next cap: ' + new_max + ')';
+
+        }
 
         // gain_detail
         newEl('gain_detail', 'div', details_div, array.gain_detail_id, 'light_small', null);
@@ -874,6 +933,7 @@ export function attachEventListeners() {
 // arrayData.push({ /* new building data */ });
 // attachEventListeners(); // Call this after modifying arrayData
 
+// RESOURCE DISPLAY / GATHER / CONVERT
 export function start_gather(obj_data) {
     
     const arrayData = obj_data;
@@ -883,7 +943,9 @@ export function start_gather(obj_data) {
         let resources_section = document.getElementById('resources_sect_id');
         let gather_section = document.getElementById('gather_sect_id');
         let convert_section = document.getElementById('convert_sect_id');
-    
+
+// RESOURCE DISPLAY SECTION
+
         newEl('res_container', 'div', resources_section, array.res_container, null, null);
         if (array.id === 'KNOWLEDGE')
         {
@@ -898,7 +960,7 @@ export function start_gather(obj_data) {
         cur_resource_lbl_2.innerHTML = ':&nbsp;';
         // append -- resource.cnt
         newEl('cur_resource_lbl_3', 'span', res_container, array.res_cnt, null, null);
-        cur_resource_lbl_3.innerHTML = array.cnt;
+        cur_resource_lbl_3.innerHTML = number_format(array.cnt);
         newEl('cur_resource_lbl_4', 'span', res_container, null, null, null);
         // append
         cur_resource_lbl_4.innerHTML = '&nbsp;/&nbsp;';
@@ -914,14 +976,14 @@ export function start_gather(obj_data) {
         
         // show starting resources
         showElementID('res_container_TWIGS');
-        showElementID('res_container_PEBBLES');
-        showElementID('res_container_PINE_NEEDLES');
+        //showElementID('res_container_PEBBLES');
+        //showElementID('res_container_PINE_NEEDLES');
 
         // show/hide elements individually
         // showElementID('resource_000');
     
-        // GATHER
-    
+// GATHER SECTION
+
         newEl('gath_container', 'div', gather_section, array.gatherDiv, null, null);
         // append
         newEl('gatherSpan1', 'span', gath_container, array.gather_btn, null, null);
@@ -935,19 +997,18 @@ export function start_gather(obj_data) {
             gatherSpan3.innerHTML = "&nbsp;(level " + array.level + ")";
         }
 
-    
         // hide all
         hideElementID(array.gatherDiv);
     
         // show starting resources
         showElementID('gather_div_TWIGS');
-        showElementID('gather_div_PEBBLES');
-        showElementID('gather_div_PINE_NEEDLES');
+        //showElementID('gather_div_PEBBLES');
+        //showElementID('gather_div_PINE_NEEDLES');
     
         // show/hide elements individually
         // showElementID('gather_div_twigs');
 
-        // CONVERT
+// CONVERT SECTION
     
         newEl('conv_container', 'div', convert_section, array.con_id, null, null);
         // append
@@ -957,22 +1018,13 @@ export function start_gather(obj_data) {
         newEl('convertSpan2', 'span', conv_container, array.con_btn, null, null);
         convertSpan2.innerHTML = array.print_convert2;
 
-        // always hide these non-convertibles
-        hideElementID('conDiv_LOGS');
-        hideElementID('conDiv_ROCKS');
-        hideElementID('conDiv_BRUSH');
-        hideElementID('conDiv_KNOWLEDGE');
-    
-        // show starting resources
-        //showElementID('conDiv_STICKS');
-        //showElementID('conDiv_STONES');
-        //showElementID('conDiv_LEAVES');
+        // always hide all convertibles initially
+        hideElementID('convert_sect_title');
+        hideElementID(array.con_id);
 
-        // show/hide elements individually
-        // showElementID('conDiv_000');
-    
-        // hide all
-        // hideElementID(array.con_lbl);
+        // show again
+        //let fetched_convert_sect_title = document.getElementById('convert_sect_title');
+        //showElementID(fetched_convert_sect_title);
 
         // CLICKS
 
@@ -994,18 +1046,27 @@ export function start_gather(obj_data) {
                     // set maximum
                     if (array.cnt >= array.max) {
                         array.cnt = array.max;
-                        update_cnt.innerHTML = array.max;
+                        update_cnt.innerHTML = number_format(array.max);
                     } 
                     if (array.cnt < array.max) {
                         array.cnt += array.gather_rate;
-                        update_cnt.innerHTML = (Math.round(array.cnt * 10) / 10).toFixed(1);
+                        update_cnt.innerHTML = number_format((Math.round(array.cnt * 10) / 10).toFixed(1));
+                        // goal #1
+                        let goal_desc = document.getElementById(goalsData[1].desc_id);
+                        let goal_cnt = resourcesData.find(res => res.id === 'TWIGS')
+                        goal_desc.innerHTML = '[*] Gather 200 Twigs. (' + Math.round((goal_cnt.cnt * 10)/ 10) + '&nbsp;/&nbsp;200&nbsp;twigs gathered)';
+                        if (goal_cnt.cnt >= 200) {
+                            goal_desc.innerHTML = '[*] Gather 200 Twigs. (200&nbsp;/&nbsp;200&nbsp;twigs gathered)';
+                            goalCompleted('goal_1');
+                        }
                     }
                     break;
                 case 'convert':
                     // available conversions
-                    if (array.cnt >= array.convert && (array.cnt + array.convert) <= array.max) {
+                    let made_res = resourcesData.find(r => r.id === array.makes);
+                    
+                    if (array.cnt >= array.convert && (made_res.cnt + array.convert) <= made_res.max) {
                         array.cnt -= array.convert;
-                        let made_res = resourcesData.find(r => r.id === array.makes);
                         
                         // altar modifications
                         // WIP: level 2 only
@@ -1090,10 +1151,12 @@ export function update_costList() {
 
                     cost.cost_object_maxed = cost.cost_object_maxed || (value > matchedData.max);
                     
+                    let add_button_max_DOM = document.getElementById(object_array.add_button_max);
                     if (cost.cost_object_maxed) {
-                        let add_button_max_DOM = document.getElementById(object_array.add_button_max);
                         add_button_max_DOM.className = 'ltred';
                         add_button_max_DOM.innerHTML = '***';
+                    } else {
+                        add_button_max_DOM.innerHTML = '';
                     }
                     
                     printCosts += costs_label;
@@ -1153,6 +1216,8 @@ export function update_costList() {
             if (cost.cost_object_maxed) {
                 add_button_max.className = 'ltred';
                 add_button_max.innerHTML = '***';
+            } else {
+                add_button_max.innerHTML = '';
             }
         }
     }); // END: costList.forEach
@@ -1219,7 +1284,7 @@ export function handleJobRemoveButtonClicks(event) {
             if (matchedObject.auto_res) {
                 resourcesData.forEach(resource => {
                     if (resource.level === 1 && resource.auto_lvl1_rate !== 0 && resource.id !== 'KNOWLEDGE') {
-                        resource.auto_lvl1_rate = 0;
+                        resource.auto_lvl1_rate -= 0.5;
                     }
                 });
             }
@@ -1240,7 +1305,7 @@ export function handleJobRemoveButtonClicks(event) {
     }
 }
 
-// Define the click event handler for purchases
+// **** ASSIGN PURCHASE ACTIONS
 export function handlePurchaseButtonClicks(event) {
     if (event.target.classList.contains('purchase-button')) {
         // Retrieve the associated data attribute (object_array)
@@ -1288,6 +1353,8 @@ export function handlePurchaseButtonClicks(event) {
                     resourcesData.forEach(res => {
                         if (res.level === 1 && res.id !== 'KNOWLEDGE') {
                             res.auto_lvl1_rate += 0.5;
+                            let auto_lvl1_res = document.getElementById(res.auto_lvl1_res);
+                            auto_lvl1_res.innerHTML = `&nbsp;(+${res.auto_lvl1_rate}&nbsp;/s)`;
                         }
                     });
                     collector.cnt += 1;
@@ -1297,10 +1364,18 @@ export function handlePurchaseButtonClicks(event) {
                 }
                 // altars
                 if (objectMod.id === 'BUILDING_PRIMITIVE_ALTAR') {
+                    // unlock level 1 convert
+                    resourcesData.forEach(res => {
+                        if (res.id !== 'KNOWLEDGE' && res.level === 1) {
+                            showElementID('convert_sect_title');
+                            showElementID(res.con_id);
+                        }
+                    });
+                    // unloxk knowledge
                     let knowledge_res = resourcesData.find(r => r.id === 'KNOWLEDGE');
                     showElementID('res_container_KNOWLEDGE');
                     knowledge_res.auto_lvl1_rate += 0.5;
-                    // WIP
+
                     if (objectMod.cnt === 5) { // default: 5
                         showElementID('res_container_STICKS');
                         showElementID('res_container_STONES');
@@ -1314,7 +1389,35 @@ export function handlePurchaseButtonClicks(event) {
 
                     }
                 }
+                // storage
+                if (objectMod.id === 'BUILDING_PRIMITIVE_STORAGE') {
+                    resourcesData.forEach(res => {
+                        if (res.id !== 'KNOWLEDGE') {
+                            res.max += (res.max * 0.50);
+                            let fetch_res_cnt_max = document.getElementById(res.res_cnt_max);
+                            fetch_res_cnt_max.innerHTML = number_format(res.max);
+                        }
+                    });
+                    
+                    let fetch_gain_lbl = document.getElementById(objectMod.gain_lbl);
+                    let old_max = resourcesData[0].max; // use TWIGS as reference
+                    let new_max = old_max + (old_max * 0.5);
+                    new_max = Math.round(new_max * 10) / 10;
+                    fetch_gain_lbl.innerHTML = '+50&percnt; maximum resource capacity (next cap: ' + new_max + ')';
 
+                }
+                // research
+                if (objectMod.id === 'RESEARCH_PRIMITIVE_CAMPFIRE') {
+                    // upgrade food gathering
+                    let fetched_foodResource = foodResource[0];
+                    fetched_foodResource.selected_food_level = 2;
+                    let DOM_gather_food_gain = document.getElementById('gather_food_gain');
+                    DOM_gather_food_gain.innerHTML = '+1.8 / +2.0 / +2.1 FOOD';
+                    let DOM_food_level = document.getElementById('food_level');
+                    DOM_food_level.innerHTML = '&nbsp;(level 2)&nbsp';
+                    // hide research
+                    hideElementID('RESEARCH_PRIMITIVE_CAMPFIRE_container');
+                }
             }
             // after any action
             let object_count_DOM = document.getElementById(objectMod.object_count);
@@ -1453,22 +1556,38 @@ export function update_food() {
     }
 }
 
-// show or hide sections
+// show or hide sections on click
 export function section_collapse(id) {
-// on click
     let section = id + '_sect_id';
     let section_title = id + '_sect_title';
     let fetch_section = document.getElementById(section);
     let fetch_section_title = document.getElementById(section_title);
+
     if (fetch_section_title) {
-        fetch_section_title.addEventListener('click', function() {
-            if (fetch_section.style.display === "none") {
-                fetch_section.style.display = "block";
-                fetch_section_title.innerHTML = '<p class="divsections">' + id.toUpperCase() + '<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>';
-            } else {
-                fetch_section.style.display = "none";
-                fetch_section_title.innerHTML = '<p class="divsections">' + id.toUpperCase() + '<span class="regtxt">&nbsp;[&nbsp;+&nbsp;]</span></p>';
-            }
-        });
+        if (!fetch_section_title.dataset.listenerSet) {
+            fetch_section_title.addEventListener('click', function toggleSection() {
+                if (fetch_section.style.display === "none") {
+                    fetch_section.style.display = "block";
+                    fetch_section_title.innerHTML = '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">' + id.toUpperCase() + '</span></p>';
+                } else {
+                    fetch_section.style.display = "none";
+                    fetch_section_title.innerHTML = '<p class="divsections_no_ul">&nbsp;[&nbsp;+&nbsp;]<span class="divsections">' + id.toUpperCase() + '</span></p>';
+                }
+            });
+            fetch_section_title.dataset.listenerSet = true;
+        }
     }
+}
+
+// convert to abbreviated numbers (resources only)
+export function number_format(num) {
+    // k for thousands
+    if (num >= 10000 && num < 1000000) {
+        return (num / 1000).toFixed(2) + 'k';
+    }
+    // m for millions
+    if (num >= 1000000 && num < 100000000) {
+        return (num / 1000).toFixed(2) + 'm';
+    }
+    return num.toString();
 }
