@@ -4,7 +4,7 @@ This is going to be an incremental / simulated gather-type "village" game with a
 # Link
 https://twaddler01.github.io/vsim/vsim.html
 # Bugs / Features
-See 'notes.md' file.
+See "notes.md" file.
 # Updates
 (08-01-2024)
 
