@@ -21,7 +21,7 @@ export function init_resourcesData() {
     // Iterate over the array and set other variables dynamically
     for (let i = 0; i < resourcesData.length; i++) {
         const resourcesIndex = resourcesData[i];
-        // (div) stores live updated cnt
+        // gather buttons / stores live updated cnt
         resourcesIndex.resource_live_cnt = 'live_cnt_' + resourcesIndex.id;
         resourcesIndex.res_lbl = 'resource_' + resourcesIndex.id;
         resourcesIndex.gatherDiv = 'gather_div_' + resourcesIndex.id;
@@ -41,10 +41,12 @@ export function init_resourcesData() {
             resourcesIndex.convert_mult = 2;
             resourcesIndex.convert_gain = 1;
         }
-        if (resourcesIndex.id !== 'KNOWLEDGE') {
-            resourcesIndex.cnt = 2000;
+        if (resourcesIndex.id !== 'KNOWLEDGE' && resourcesIndex.level === 1) {
+            resourcesIndex.cnt = 0;
+            resourcesIndex.hidden = true; ////
         } else {
-            resourcesIndex.cnt = 0; // knowledge starts at 0
+            resourcesIndex.cnt = 0; // higher levels start at 0
+            resourcesIndex.hidden = true;
         }
         resourcesIndex.max = 2000;
         resourcesIndex.res_container = 'res_container_' + resourcesIndex.id;
@@ -67,7 +69,7 @@ export function init_tribeData() {
 
     const tribeData = [
         // resource 'AVAILABLE_MEMBERS' for jobsData
-        { id: 'AVAILABLE_MEMBERS', lbl: 'Available Members', print: '-- Available Members:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Available Members' },
+        { id: 'AVAILABLE_MEMBERS', lbl: 'Available Members', print: 'Available Members:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Available Members' },
         { id: 'TRIBE_LEADER', lbl: 'Tribe Leaders', print: 'Tribe Leaders:&nbsp;', cnt: 1, type: 'job', food_gain: 0.2, food_gain_eid: 'food_gain_eid' },
         { id: 'POP_GATHERER', lbl: 'Gatherers', print: 'Gatherers:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Gatherer', food_gain: 1, food_consume: 0.2, uses: 'POP' }, // net gain: 0.8
         { id: 'POP_BASIC_HUNTER', lbl: 'Basic Hunters', print: 'Basic Hunters:&nbsp;', cnt: 0, type: 'job', cost_lbl: 'Basic Hunter', food_gain: 2, food_consume: 0.4, food_gain_flag: false, uses: 'POP' },
@@ -99,10 +101,12 @@ export function init_foodSources() {
         { id: 'wild_lettuce', lbl: 'Wild Lettuce', lvl: 1, multiplier: 0.8, cnt: 0, rare: 3 },
         { id: 'berries', lbl: 'Berries', lvl: 1, multiplier: 1, cnt: 0, rare: 2 },
         { id: 'mushroom', lbl: 'Mushroom', lvl: 1, multiplier: 1.1, cnt: 0, rare: 1 },
-        { id: 'squirrel', lbl: 'Squirrel', lvl: 2, multiplier: 1.3, cnt: 0 },
-        { id: 'deer', lbl: 'Deer', lvl: 2, multiplier: 1.5, cnt: 0 },
-        { id: 'sheep', lbl: 'Sheep', lvl: 3, multiplier: 1.8, cnt: 0 },
-        { id: 'wild_boar', lbl: 'Wild Boar', lvl: 3, multiplier: 2.0, cnt: 0 },
+        { id: 'squirrel', lbl: 'Squirrel', lvl: 2, multiplier: 1.8, cnt: 0, rare: 3 },
+        { id: 'raccoon', lbl: 'Raccoon', lvl: 2, multiplier: 2.0, cnt: 0, rare: 2 },
+        { id: 'deer', lbl: 'Deer', lvl: 2, multiplier: 2.1, cnt: 0, rare: 1 },
+        { id: 'sheep', lbl: 'Sheep', lvl: 3, multiplier: 2.8, cnt: 0 },
+        { id: 'wild_boar', lbl: 'Wild Boar', lvl: 3, multiplier: 3.0, cnt: 0 },
+        { id: 'buffalo', lbl: 'Buffalo', lvl: 3, multiplier: 3.1, cnt: 0 },
     ];
     
     // Iterate over the array and set other variables dynamically
@@ -128,7 +132,7 @@ export function init_foodSources() {
 export function init_foodResource() {
     const foodResource = [
         // added live: food_dep, tick
-        { id: 'food', lbl: 'Food:&nbsp', cnt: 200, max: 500, gain: 0, food_dep: 0, loss: 0, net_difference: 0, gather_rate: 1 }, 
+        { id: 'food', lbl: 'Food:&nbsp', cnt: 0, max: 500, gain: 0, food_dep: 0, loss: 0, net_difference: 0, gather_rate: 1, selected_food_level: 1 }, 
     ];
     
     return foodResource;
@@ -137,11 +141,29 @@ export function init_foodResource() {
 export function init_goalsData() {
 
     const goalsData = [
-        { id: 0, desc: '[*] Become tribe leader.', goal_req_met: false },
-        { id: 1, desc: '[*] Gather 2000 Twigs.', goal_req_met: false },
-        { id: 2, desc: '[*] Build an altar to recruit a new tribe member.', goal_req_met: false },
-        { id: 3, desc: '[*] Convert 10 of each resource to gather new resources.', goal_req_met: false },
+        { id: 'goal_0', desc: '[*] Become tribe leader.', 
+        sub: 'Click the "BECOME TRIBE LEADER" button to become the tribe leader and start game!', goal_req_met: false, active_goal: true },
+        { id: 'goal_1', desc: '[*] Gather 200 Twigs. (0 / 200 twigs gathered)', 
+        sub: 'Click the "GATHER TWIGS" button  to gather 200 twigs.', goal_req_met: false, active_goal: false },
+        { id: 'goal_2', desc: '[*] Build a shelter to recruit a new tribe member.', 
+        sub: '1. Upgrade TWIGS collection to level 5.', 
+        sub2: '2. Collect enough TWIGS and PEBBLES to build a shelter.', goal_req_met: false, active_goal: false }, 
+        { id: 'goal_3', desc: '[*] Convert 10 of each resource to gather new resources.', 
+        sub: 'SUB_GOAL', goal_req_met: false, active_goal: false },
     ];
+
+    for (let i = 0; i < goalsData.length; i++) {
+        const GD_Index = goalsData[i];
+        const GD_Updates = {};
+        GD_Updates.container_id = GD_Index.id + '_container';
+        GD_Updates.desc_id = GD_Index.id + '_desc';
+        GD_Updates.complete_id = GD_Index.id + '_complete';
+        GD_Updates.sub_id = GD_Index.id + '_sub';
+        GD_Updates.sub_id2 = GD_Index.id + '_sub2';
+        GD_Updates.next_goal_id = GD_Index.id + '_next';
+        // Assign all updates to objectElements properties
+        Object.assign(GD_Index, GD_Updates);
+    }
 
     return goalsData;
 
@@ -157,76 +179,21 @@ export function init_objectiveData() {
 
 }
 
-export function init_costList() {
-
-    const costList = [
-
-        { id: 'GATHER_TWIGS', costs: { 'TWIGS': 20, 'PEBBLES': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_PEBBLES', costs: { 'TWIGS': 10, 'PEBBLES': 20 }, cost_type: 'res' }, 
-        { id: 'GATHER_PINE_NEEDLES', costs: { 'TWIGS': 10, 'PEBBLES': 10, 'PINE_NEEDLES': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_STICKS', costs: { 'STICKS': 20, 'STONES': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_STONES', costs: { 'STICKS': 10, 'STONES': 20 }, cost_type: 'res' }, 
-        { id: 'GATHER_LEAVES', costs: { 'STICKS': 10, 'STONES': 10, 'LEAVES': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_LOGS', costs: { 'LOGS': 20, 'ROCKS': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_ROCKS', costs: { 'ROCKS': 20, 'LOGS': 10 }, cost_type: 'res' }, 
-        { id: 'GATHER_BRUSH', costs: { 'LOGS': 10, 'ROCKS': 10, 'BRUSH': 10 }, cost_type: 'res' }, 
-        { id: 'BUILDING_PRIMITIVE_SHELTER', costs: { 'TWIGS': 500, 'PEBBLES': 100 }, cost_type: 'res' }, 
-        { id: 'BUILDING_BASIC_CRAFTING_STATION', costs: { 'TWIGS': 100, 'PEBBLES': 500, 'PINE_NEEDLES': 50 }, cost_type: 'res' }, 
-        { id: 'BUILDING_PRIMITIVE_ALTAR', costs: { 'TWIGS': 200, 'PEBBLES': 200, 'PINE_NEEDLES': 400 }, cost_type: 'res' }, 
-        { id: 'POP_GATHERER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
-        { id: 'POP_BASIC_HUNTER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, // OLD : cost_type: ['job', 'craft']
-        { id: 'POP_BASIC_COLLECTOR', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
-        { id: 'CRAFT_SPEAR', costs: { 'TWIGS': 10, 'PEBBLES': 10 }, cost_type: 'res' }, 
-        { id: 'CRAFT_SLING', costs: { 'TWIGS': 10 }, cost_type: 'res' }, 
-        { id: 'CRAFT_BOW', costs: { 'TWIGS': 10 }, cost_type: 'res' }, 
-    
-    ];
-
-    // Iterate over the array and set other variables dynamically
-    for (let i = 0; i < costList.length; i++) {
-        const costListIndex = costList[i];
-        const costListUpdates = {};
-       // *** other data *** 
-        costListUpdates.available_for_purchase = true;
-        costListUpdates.cost_object_maxed = true;
-        // Assign updates to costList properties
-        Object.assign(costListIndex, costListUpdates);
-    }
-
-    // add a lbl property to array based on id
-    add_lbl(costList);
-
-    return costList;
-
-}
-// EXTRACT DATA
-/*
-costList.forEach(obj => {
-    console.log("ID: " + obj.id); // Accessing the 'id' property of each object
-    console.log("Cost Type: " + obj.cost_type); // Accessing the 'cost_type' property of each object
-            
-    // Iterating over the 'costs' object within each object
-    Object.entries(obj.costs).forEach(([key, value]) => {
-        console.log("Key: " + key); // Accessing the key of each key-value pair in 'costs'
-        console.log("Value: " + value); // Accessing the value of each key-value pair in 'costs'
-    });
-});
-*/
-
 export function init_objectElements() {
 
     const objectElements = [
 
-        { id: 'GATHER_TWIGS', lbl: 'Twigs', obj_type: 'upgrade' }, 
-        { id: 'GATHER_PEBBLES', lbl: 'Pebbles', obj_type: 'upgrade' }, 
-        { id: 'GATHER_PINE_NEEDLES', lbl: 'Pine Needles', obj_type: 'upgrade' },  
-        { id: 'GATHER_STICKS', lbl: 'Sticks', obj_type: 'upgrade' }, 
-        { id: 'GATHER_STONES', lbl: 'Stones', obj_type: 'upgrade' }, 
-        { id: 'GATHER_LEAVES', lbl: 'Leaves', obj_type: 'upgrade' },  
-        { id: 'GATHER_LOGS', lbl: 'Logs', obj_type: 'upgrade' }, 
-        { id: 'GATHER_ROCKS', lbl: 'Rocks', obj_type: 'upgrade' }, 
-        { id: 'GATHER_BRUSH', lbl: 'Brush', obj_type: 'upgrade' }, 
-        // static buildings
+// UPGRADE
+        { id: 'GATHER_TWIGS', lbl: 'Twigs', obj_type: 'upgrade', level: 1 }, 
+        { id: 'GATHER_PEBBLES', lbl: 'Pebbles', obj_type: 'upgrade', level: 1 }, 
+        { id: 'GATHER_PINE_NEEDLES', lbl: 'Pine Needles', obj_type: 'upgrade', level: 1 },  
+        { id: 'GATHER_STICKS', lbl: 'Sticks', obj_type: 'upgrade', level: 2 }, 
+        { id: 'GATHER_STONES', lbl: 'Stones', obj_type: 'upgrade', level: 2 }, 
+        { id: 'GATHER_LEAVES', lbl: 'Leaves', obj_type: 'upgrade', level: 2 },  
+        { id: 'GATHER_LOGS', lbl: 'Logs', obj_type: 'upgrade', level: 3 }, 
+        { id: 'GATHER_ROCKS', lbl: 'Rocks', obj_type: 'upgrade', level: 3 }, 
+        { id: 'GATHER_BRUSH', lbl: 'Brush', obj_type: 'upgrade', level: 3 }, 
+// BUILDING
         { id: 'BUILDING_PRIMITIVE_SHELTER', lbl: 'Primitive Shelter', obj_type: 'building', makes: 'AVAILABLE_MEMBERS',
             title: 'Primitive Shelter',
             desc: '...A basic shelter, providing minimal protection from the elements.<br>...Provides a home for 1 tribe member.',
@@ -246,8 +213,21 @@ export function init_objectElements() {
             gain_detail_lbl: 'Required for converting level 1 resources into level 2 resources (sticks, stones, and leaves).',
             // extras
             bonus_txt: '(LEVEL 5): Grants the ability to collect level 2 resources (sticks, stones, and leaves) diectly.',
-            },
-        // static jobs
+            }, 
+        { id: 'BUILDING_PRIMITIVE_STORAGE', lbl: 'Primitive Storage', obj_type: 'building',
+            title: 'Primitive Storage', 
+            desc: '...Basic storage for gathered resources.<br>...Increases storage capacity by 50%',
+            gain_lbl: '+50&percnt; maximum resource capacity (next cap: 0)', 
+            gain_detail_lbl: 'Needed to purchase more expensive upgrades for your tribe.',
+            }, 
+// RESEARCH
+        { id: 'RESEARCH_PRIMITIVE_CAMPFIRE', lbl: 'Primitive Campfire', obj_type: 'research',
+            title: 'Primitive Campfire', 
+            desc: '...Using knowledge gained by the ancients, discover the wondrous mysteries of fire.<br>...Allows the gathering of level 2 foods.',
+            gain_lbl: 'GATHER FOOD (level 2)', 
+            gain_detail_lbl: 'Grants +1.8 / +2.0 / +1.2 food.',
+            }, 
+// JOB
         { id: 'POP_GATHERER', lbl: 'Gatherer', obj_type: 'job',
             title: 'JOB: Basic Fruit Gatherer',
             desc: '...Automatically gathers basic fruit to help feed your people.',
@@ -274,7 +254,7 @@ export function init_objectElements() {
             // static
             auto_res: true,
             }, 
-        // static crafted items
+// CRAFT
         { id: 'CRAFT_SPEAR', lbl: 'Spear', obj_type: 'craft' }, 
         { id: 'CRAFT_SLING', lbl: 'Sling', obj_type: 'craft' }, 
         { id: 'CRAFT_BOW', lbl: 'Bow', obj_type: 'craft' },  
@@ -315,6 +295,10 @@ export function init_objectElements() {
         }
         if (OE_Index.obj_type === 'building') {
             OE_Updates.add_button_lbl = 'BUILD';
+            
+        }
+        if (OE_Index.obj_type === 'research') {
+            OE_Updates.add_button_lbl = 'RESEARCH';
             
         }
         if (OE_Index.obj_type === 'job') {
@@ -359,6 +343,50 @@ export function init_objectElements() {
     }
 
     return objectElements;
+
+}
+
+export function init_costList() {
+
+    const costList = [
+
+        { id: 'GATHER_TWIGS', costs: { 'TWIGS': 20, 'PEBBLES': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_PEBBLES', costs: { 'TWIGS': 10, 'PEBBLES': 20 }, cost_type: 'res' }, 
+        { id: 'GATHER_PINE_NEEDLES', costs: { 'TWIGS': 10, 'PEBBLES': 10, 'PINE_NEEDLES': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_STICKS', costs: { 'STICKS': 20, 'STONES': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_STONES', costs: { 'STICKS': 10, 'STONES': 20 }, cost_type: 'res' }, 
+        { id: 'GATHER_LEAVES', costs: { 'STICKS': 10, 'STONES': 10, 'LEAVES': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_LOGS', costs: { 'LOGS': 20, 'ROCKS': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_ROCKS', costs: { 'ROCKS': 20, 'LOGS': 10 }, cost_type: 'res' }, 
+        { id: 'GATHER_BRUSH', costs: { 'LOGS': 10, 'ROCKS': 10, 'BRUSH': 10 }, cost_type: 'res' }, 
+        { id: 'BUILDING_PRIMITIVE_SHELTER', costs: { 'TWIGS': 500, 'PEBBLES': 100 }, cost_type: 'res' }, 
+        { id: 'BUILDING_BASIC_CRAFTING_STATION', costs: { 'TWIGS': 100, 'PEBBLES': 500, 'PINE_NEEDLES': 50 }, cost_type: 'res' }, 
+        { id: 'BUILDING_PRIMITIVE_ALTAR', costs: { 'TWIGS': 200, 'PEBBLES': 200, 'PINE_NEEDLES': 400 }, cost_type: 'res' }, 
+        { id: 'BUILDING_PRIMITIVE_STORAGE', costs: { 'TWIGS': 1000, 'PEBBLES': 2000, 'PINE_NEEDLES': 1000 }, cost_type: 'res' }, 
+        { id: 'RESEARCH_PRIMITIVE_CAMPFIRE', costs: { 'STICKS': 2000, 'STONES': 2000, 'LEAVES': 2000, 'KNOWLEDGE': 1000 }, cost_type: 'res' }, 
+        { id: 'POP_GATHERER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
+        { id: 'POP_BASIC_HUNTER', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, // OLD : cost_type: ['job', 'craft']
+        { id: 'POP_BASIC_COLLECTOR', costs: { 'AVAILABLE_MEMBERS': 1 }, cost_type: 'job' }, 
+        { id: 'CRAFT_SPEAR', costs: { 'TWIGS': 10, 'PEBBLES': 10 }, cost_type: 'res' }, 
+        { id: 'CRAFT_SLING', costs: { 'TWIGS': 10 }, cost_type: 'res' }, 
+        { id: 'CRAFT_BOW', costs: { 'TWIGS': 10 }, cost_type: 'res' }, 
+    ];
+
+    // Iterate over the array and set other variables dynamically
+    for (let i = 0; i < costList.length; i++) {
+        const costListIndex = costList[i];
+        const costListUpdates = {};
+       // *** other data *** 
+        costListUpdates.available_for_purchase = true;
+        costListUpdates.cost_object_maxed = true;
+        // Assign updates to costList properties
+        Object.assign(costListIndex, costListUpdates);
+    }
+
+    // add a lbl property to array based on id
+    add_lbl(costList);
+
+    return costList;
 
 }
 
