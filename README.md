@@ -3,6 +3,8 @@
 This is going to be an incremental / simulated gather-type "village" game with an evolution eventually to space. Keeping it in JS for ease of distribution and eventual, yet simplified, mobile app development and deployment.
 # Link
 https://twaddler01.github.io/vsim/vsim.html
+# Bugs / Features
+See 'notes.md' file.
 # Updates
 (08-01-2024)
 
