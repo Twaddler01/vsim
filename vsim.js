@@ -79,27 +79,32 @@ exportHTMLButton.addEventListener("click", function () {
 // SPECIAL: title, goals, tribe, resources, gather, convert
 
 functions.createNewSection('div', 'vsim_title', null, null, 'body');
-functions.createNewSection('div', 'goals_sect_id', null, '<p class="pinktxt">Goals:</p>', 'body');
 
-functions.createNewSection('div', 'tribe_sect_title', null, '<p class="divsections">TRIBE<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
+functions.createNewSection('div', 'goals_sect_title', 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">GOALS</span></p>', 'body');
+functions.showElementID('goals_sect_title');
+functions.createNewSection('div', 'goals_sect_id', 'section_text', '<p class="ppinktxt"GOALS</p>', 'body');
+functions.section_collapse('goals');
+
+functions.createNewSection('div', 'tribe_sect_title', 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">TRIBE</span></p>', 'body');
 functions.showElementID('tribe_sect_title');
-functions.createNewSection('div', 'tribe_sect_id', null, null, 'body');
+functions.createNewSection('div', 'tribe_sect_id', 'section_text', null, 'body');
+
 functions.section_collapse('tribe');
 functions.createNewSection('div', 'TRIBE_LEADER_obj', null, null, 'tribe_sect_id');
 
-functions.createNewSection('div', 'resources_sect_title', null, '<p class="divsections">RESOURCES<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
-functions.showElementID('resources_sect_title');
-functions.createNewSection('div', 'resources_sect_id', null, null, 'body');
+functions.createNewSection('div', 'resources_sect_title', 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">RESOURCES</span></p>', 'body');
+//functions.showElementID('resources_sect_title');
+functions.createNewSection('div', 'resources_sect_id', 'section_text', null, 'body');
 functions.section_collapse('resources');
 
-functions.createNewSection('div', 'gather_sect_title', null, '<p class="divsections">GATHER<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
-functions.showElementID('gather_sect_title');
-functions.createNewSection('div', 'gather_sect_id', null, null, 'body');
+functions.createNewSection('div', 'gather_sect_title', 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">GATHER</span></p>', 'body');
+//functions.showElementID('gather_sect_title');
+functions.createNewSection('div', 'gather_sect_id', 'section_text', null, 'body');
 functions.section_collapse('gather');
 
-functions.createNewSection('div', 'convert_sect_title', null, '<p class="divsections">CONVERT<span class="regtxt">&nbsp;[&nbsp;-&nbsp;]</span></p>', 'body');
-functions.showElementID('convert_sect_title');
-functions.createNewSection('div', 'convert_sect_id', null, null, 'body');
+functions.createNewSection('div', 'convert_sect_title', 'section_title', '<p class="divsections_no_ul">&nbsp;[&nbsp;--&nbsp;]<span class="divsections">CONVERT</span></p>', 'body');
+//functions.showElementID('convert_sect_title');
+functions.createNewSection('div', 'convert_sect_id', 'section_text', null, 'body');
 functions.createNewSection('div', 'convert_lvl1', null, null, 'convert_sect_id');
 functions.section_collapse('convert');
 
@@ -128,21 +133,23 @@ setTimeout(() => {
 }, 5000); // Adjust the time as needed
 */
 
-functions.addClickEvent('add_active');
-functions.createGoal(0);
-
 // TESTING
-/*
-resourcesData[0].cnt = 20;
-resourcesData[1].cnt = 10;
-resourcesData[2].cnt = 5;
+/*resourcesData.forEach(res => {
+    res.gather_rate = 250;
+    res.cnt = 2000;
+});*/
+//resourcesData[0].gather_rate = 250;
+//resourcesData[1].gather_rate = 250;
+//resourcesData[2].gather_rate = 250;
+resourcesData[0].cnt = 190;
+//resourcesData[1].cnt = 10;
+//resourcesData[2].cnt = 5;
 //tribeData[0].cnt = 20
-*/
 
 // AVAILABLE_MEMBERS
-tribeData[0].cnt = 0;
+//tribeData[0].cnt = 5;
 // CRAFT_SPEAR
-objectElements[15].cnt = 2;
+//objectElements[15].cnt = 2;
 
 /*
 // random food test
@@ -272,10 +279,15 @@ objectElements.forEach(objectMod => {
             // UPDATE auto gatherers
             let auto_lvl1_res = document.getElementById(resource.auto_lvl1_res);
             resourcesData.forEach(res => {
-                if (res.level === 1) {
+                if (res.level === 1 && res.hidden === false) {
                     if (resource.auto_lvl1_rate === 0 || resource.cnt >= resource.max) {
-                        auto_lvl1_res.innerHTML = '';
+                        if (resource.auto_lvl1_rate > 0) {
+                            auto_lvl1_res.className = 'button_faded';
+                        } else {
+                            auto_lvl1_res.innerHTML = '';
+                        }
                     } else {
+                        auto_lvl1_res.className = 'ltgreentxt';
                         auto_lvl1_res.innerHTML = `&nbsp;(+${resource.auto_lvl1_rate}&nbsp;/s)`;
                     }
                 }
@@ -286,10 +298,12 @@ objectElements.forEach(objectMod => {
             // UPDATE resource counts
             resource.cnt = Math.round(resource.cnt * 10) / 10;
             let fetched_cnt = document.getElementById(resource.res_cnt);
+            let fetched_res_cnt_max = document.getElementById(resource.res_cnt_max);
             let fetched_res_container = document.getElementById(resource.res_container);
             if (resource.cnt >= resource.max) {
                 resource.cnt = resource.max;
-                fetched_cnt.innerHTML = resource.max;
+                fetched_cnt.innerHTML = functions.number_format(resource.max);
+                fetched_res_cnt_max.innerHTML = functions.number_format(resource.max);
                 if (resource.id !== 'KNOWLEDGE') {
                     fetched_res_container.className = 'ltbluetxt';
                     fetched_res_container.style.fontWeight = 'bold';
@@ -308,7 +322,13 @@ objectElements.forEach(objectMod => {
                     fetched_res_container.style.fontWeight = 'normal';
                 }
                 resource.cnt += resource.auto_lvl1_rate;
-                fetched_cnt.innerHTML = resource.cnt.toFixed(1);
+                fetched_cnt.innerHTML = functions.number_format(resource.cnt.toFixed(1));
+            }
+            if (resource.level === 1 || resource.level === 2) {
+                if (resource.cnt > 0 && resource.hidden === true) {
+                    functions.showElementID('res_container_' + resource.id);
+                    resource.hidden = false;
+                }
             }
             
             // UPDATE convert div (2)
@@ -320,9 +340,9 @@ objectElements.forEach(objectMod => {
                 }
                 // UPDATE output display
                 if (resource.cnt >= resource.convert) {
-                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div><hr>';
+                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltgreentxt">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div>';
                 } else {
-                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div><hr>';            
+                    document.getElementById(resource.con_id).innerHTML = '<button class="button">CONVERT 10 ' + resource.lbl + '</button>&nbsp;<span class="ltgreentxt">+' + resource.convert_gain + '&nbsp;' + resource.makes.toUpperCase() + '</span>&nbsp;<div class="ltred">' + resource.cnt + ' / ' + resource.convert + ' ' + resource.lbl + '</div>';            
                 }
             }
         });
@@ -336,12 +356,17 @@ objectElements.forEach(objectMod => {
 // start 1 second interval
 start_interval(interval_normal);
 
+// display goals data
+functions.showElementID('goals_sect_id');
 // display resources data
-functions.showElementID('resources_sect_id');
+//functions.showElementID('resources_sect_id');
 // display gather buttons
-functions.showElementID('gather_sect_id');
+//functions.showElementID('gather_sect_id');
 // display convert buttons
-functions.showElementID('convert_sect_id');
+//functions.showElementID('convert_sect_id');
+
+// start goals function
+functions.startGoals();
 
 // start gather/convert function
 functions.start_gather(resourcesData);
