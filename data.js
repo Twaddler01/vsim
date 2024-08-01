@@ -147,7 +147,12 @@ export function init_goalsData() {
         sub: 'Click the "GATHER TWIGS" button  to gather 200 twigs.', goal_req_met: false, active_goal: false },
         { id: 'goal_2', desc: '[*] Build a shelter to recruit a new tribe member.', 
         sub: '1. Upgrade TWIGS collection to level 5.', 
-        sub2: '2. Collect enough TWIGS and PEBBLES to build a shelter.', goal_req_met: false, active_goal: false }, 
+        sub2: '2. Upgrade PEBBLES collection to level 5.', 
+        sub3: '3. Collect enough TWIGS and PEBBLES to build a shelter.', 
+        goal_req_met: false, active_goal: false, 
+        sub_status: 'pending', // for multiple sub goals only
+        sub2_status: 'pending', // either 'pending' or 'done'
+        sub3_status: 'pending' }, 
         { id: 'goal_3', desc: '[*] Convert 10 of each resource to gather new resources.', 
         sub: 'SUB_GOAL', goal_req_met: false, active_goal: false },
     ];
@@ -159,7 +164,12 @@ export function init_goalsData() {
         GD_Updates.desc_id = GD_Index.id + '_desc';
         GD_Updates.complete_id = GD_Index.id + '_complete';
         GD_Updates.sub_id = GD_Index.id + '_sub';
-        GD_Updates.sub_id2 = GD_Index.id + '_sub2';
+        if (GD_Index.sub2) {
+            GD_Updates.sub_id2 = GD_Index.id + '_sub2';
+        }
+        if (GD_Index.sub3) {
+            GD_Updates.sub_id3 = GD_Index.id + '_sub3';
+        }        
         GD_Updates.next_goal_id = GD_Index.id + '_next';
         // Assign all updates to objectElements properties
         Object.assign(GD_Index, GD_Updates);
